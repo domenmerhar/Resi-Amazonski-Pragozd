@@ -4,7 +4,8 @@
 using namespace std;
 
 class GameObject {
-	int x, y;
+protected:
+	int x, y, movementSpeed;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -12,7 +13,7 @@ class GameObject {
 	SDL_Surface* tempSurface;
 
 public:
-	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y) {
+	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed) {
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, 32, 32, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
@@ -22,11 +23,12 @@ public:
 		this->renderer = renderer;
 		this->x = x;
 		this->y = y;
+		this->movementSpeed = movementSpeed;
 	}
 
 	void Update() {
-		x += 5;
-		y += 5;
+		/*x += movementSpeed;
+		y += movementSpeed;*/
 
 		sourceRectangle.h = 64;
 		sourceRectangle.w = 64;
@@ -45,8 +47,39 @@ public:
 
 };
 
-GameObject* player;
+class Player : public GameObject {
+public:
+	using GameObject::GameObject;
 
+	void HandleInput() {
+		SDL_Event event;
+
+		if (SDL_PollEvent(&event) && event.type == SDL_KEYDOWN) {
+			switch (event.key.keysym.sym) {
+			case SDLK_UP:
+				y -= movementSpeed;
+				break;
+			case SDLK_DOWN:
+				y += movementSpeed;
+				break;
+			case SDLK_LEFT:
+				x -= movementSpeed;
+				break;
+			case SDLK_RIGHT:
+				x += movementSpeed;
+				break;
+			default:
+				break;
+			}
+
+		}
+
+
+	}
+};
+
+
+Player* player;
 
 class Game
 {
@@ -84,7 +117,7 @@ public:
 			isRunning = true;
 		}
 
-		player = new GameObject(255, 255, 255, gameRenderer, 0, 0);
+		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5);
 	}
 
 	void HandleEvents() {
@@ -167,6 +200,7 @@ int main(int argc, char* argv[]) {
 
 		frameManager.StartFrame();
 
+		player->HandleInput();
 		game->HandleEvents();
 		game->Update();
 		game->Render();
