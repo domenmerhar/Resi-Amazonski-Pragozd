@@ -52,43 +52,44 @@ public:
 	using GameObject::GameObject;
 
 	void HandleInput() {
-		SDL_Event event;
+		const float diagonalSpeedMultiplier = 0.7071; // Approximately 1 / sqrt(2)
 
-		if (SDL_PollEvent(&event) && event.type == SDL_KEYDOWN) {
-			switch (event.key.keysym.sym) {
-			case SDLK_UP:
-				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_RIGHT])
-					x += movementSpeed * 1.41;
-				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LEFT])
-					x -= movementSpeed * 1.41;
-				y -= movementSpeed;
-				break;
-			case SDLK_DOWN:
-				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_RIGHT])
-					x += movementSpeed * 1.41;
-				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LEFT])
-					x -= movementSpeed * 1.41;
-				y += movementSpeed;
-				break;
-			case SDLK_LEFT:
-				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_UP])
-					y -= movementSpeed * 1.41;
-				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_DOWN])
-					y += movementSpeed * 1.41;
-				x -= movementSpeed;
-				break;
-			case SDLK_RIGHT:
-				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_UP])
-					y -= movementSpeed * 1.41;
-				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_DOWN])
-					y += movementSpeed * 1.41;
-				x += movementSpeed;
-				break;
-			default:
-				break;
-			}
+		SDL_PumpEvents(); // Update the internal key state
+
+		const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+
+		int dx = 0, dy = 0;
+
+		// Check for diagonal movement
+		bool isDiagonal = (dx != 0 && dy != 0);
+
+		// If diagonal movement detected, adjust dx and dy
+		if (isDiagonal) {
+			// Scale down both dx and dy equally
+			dx = (int)(dx * diagonalSpeedMultiplier);
+			dy = (int)(dy * diagonalSpeedMultiplier);
 		}
+
+		// Determine the movement direction based on key states
+		if (keys[SDL_SCANCODE_UP]) {
+			dy -= 1;
+		}
+		if (keys[SDL_SCANCODE_DOWN]) {
+			dy += 1;
+		}
+		if (keys[SDL_SCANCODE_LEFT]) {
+			dx -= 1;
+		}
+		if (keys[SDL_SCANCODE_RIGHT]) {
+			dx += 1;
+		}
+
+		// Update the position
+		x += dx * movementSpeed;
+		y += dy * movementSpeed;
 	}
+
 };
 
 
