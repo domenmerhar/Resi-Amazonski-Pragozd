@@ -3,14 +3,56 @@
 
 using namespace std;
 
-SDL_Texture* playerTex;
-SDL_Rect sourceRectangle, destinationRectangle;
+class GameObject {
+	int x, y;
+
+	SDL_Texture* texture;
+	SDL_Rect sourceRectangle, destinationRectangle;
+	SDL_Renderer* renderer;
+	SDL_Surface* tempSurface;
+
+public:
+	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y) {
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, 32, 32, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+
+		this->renderer = renderer;
+		this->x = x;
+		this->y = y;
+	}
+
+	void Update() {
+		x += 5;
+		y += 5;
+
+		sourceRectangle.h = 64;
+		sourceRectangle.w = 64;
+		sourceRectangle.x = 0;
+		sourceRectangle.y = 0;
+
+		destinationRectangle.x = x;
+		destinationRectangle.y = y;
+		destinationRectangle.w = sourceRectangle.w * 2;
+		destinationRectangle.h = sourceRectangle.h * 2;
+	}
+
+	void Render() {
+        SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
+	}
+
+};
+
+GameObject* player;
+
 
 class Game
 {
 	bool isRunning = false;
 	SDL_Window* window;
-	SDL_Renderer* renderer;
+	SDL_Renderer* gameRenderer;
 		
 public:
 	Game() {};
@@ -32,20 +74,17 @@ public:
 				cout << "Window created!" << endl;
 			}
 
-			renderer = SDL_CreateRenderer(window, -1, 0);
+			gameRenderer = SDL_CreateRenderer(window, -1, 0);
 
-			if(renderer) {
-				SDL_SetRenderDrawColor(renderer, 55, 178, 77, 255);
+			if(gameRenderer) {
+				SDL_SetRenderDrawColor(gameRenderer, 55, 178, 77, 255);
 				cout << "Renderer created!" << endl;
 			}
 
 			isRunning = true;
 		}
 
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, 32, 32, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 32, 32, 32));
-		playerTex = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
+		player = new GameObject(255, 255, 255, gameRenderer, 0, 0);
 	}
 
 	void HandleEvents() {
@@ -63,44 +102,24 @@ public:
 	};
 
 	void Update() {
-		destinationRectangle.h = 64;
-		destinationRectangle.w = 64;
-		destinationRectangle.x+= 5;
-		destinationRectangle.y+= 5;
+		player->Update();
 	};
 
 	void Render() {
-		SDL_RenderClear(renderer);
-		SDL_RenderCopy(renderer, playerTex, NULL, &destinationRectangle);
-		SDL_RenderPresent(renderer);
+		SDL_RenderClear(gameRenderer);
+		player->Render();
+		SDL_RenderPresent(gameRenderer);
 	};
 
 	void Clean() {
 		SDL_DestroyWindow(window);
-		SDL_DestroyRenderer(renderer);
+		SDL_DestroyRenderer(gameRenderer);
 		SDL_Quit();
 		cout << "Game cleaned!" << endl;
 	};
 
 	bool IsRunning() { 
 		return isRunning;
-	}
-};
-
-class GameObject {
-	int x, y;
-	SDL_Renderer* renderer;
-public:
-	GameObject(const char* texturesheet, SDL_Renderer* renderer) {
-		this->renderer = renderer;
-		x = y = 0;
-	};
-
-	GameObject(const char* texturesheet, SDL_Renderer* renderer, int x, int y) {
-		objTexture = TextureManager::LoadTexture(texturesheet, ren);
-		this->renderer = renderer;
-		this->x = x;
-		this->y = y;
 	}
 };
 
