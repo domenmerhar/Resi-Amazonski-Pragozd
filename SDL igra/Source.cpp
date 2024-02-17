@@ -57,24 +57,37 @@ public:
 		if (SDL_PollEvent(&event) && event.type == SDL_KEYDOWN) {
 			switch (event.key.keysym.sym) {
 			case SDLK_UP:
+				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_RIGHT])
+					x += movementSpeed * 1.41;
+				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LEFT])
+					x -= movementSpeed * 1.41;
 				y -= movementSpeed;
 				break;
 			case SDLK_DOWN:
+				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_RIGHT])
+					x += movementSpeed * 1.41;
+				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_LEFT])
+					x -= movementSpeed * 1.41;
 				y += movementSpeed;
 				break;
 			case SDLK_LEFT:
+				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_UP])
+					y -= movementSpeed * 1.41;
+				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_DOWN])
+					y += movementSpeed * 1.41;
 				x -= movementSpeed;
 				break;
 			case SDLK_RIGHT:
+				if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_UP])
+					y -= movementSpeed * 1.41;
+				else if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_DOWN])
+					y += movementSpeed * 1.41;
 				x += movementSpeed;
 				break;
 			default:
 				break;
 			}
-
 		}
-
-
 	}
 };
 
@@ -92,7 +105,6 @@ public:
 	~Game() {};
 
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
-
 		int flags = 0;
 		if (fullscreen) {
 			flags = SDL_WINDOW_FULLSCREEN;
