@@ -187,6 +187,18 @@ public:
 
 class Ally : public GameObject {
 	int spawnX, spawnY;
+	int targetX, targetY;
+
+
+	int r;
+
+	int frameCounter = 180;
+
+	void GenerateRandomTarget() {
+		targetX = Util::GetRandomX(width);
+		targetY = Util::GetRandomY(height);
+	}
+
 public:
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
 		this->width = width;
@@ -205,40 +217,35 @@ public:
 
 		UpdateSourceRectangle();
 		visible = true;
+
+		GenerateRandomTarget();
 	}
 
 	Ally(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
 		Init(red, green, blue, renderer, movementSpeed, width, height);
+		r = red;
 	}
 
 	void Move() {
-		if (visible) {
-			int moveSet = rand() % 4;
+		frameCounter--;
 
-			int dx = 0, dy = 0;
+		if (frameCounter <= 0) {
+			GenerateRandomTarget();
+			frameCounter = 180;
+		}
 
-			switch (moveSet)
-			{
-			case 0:
-				dx = 1;
-				dy = 0;
-				break;
-			case 1:
-				dx = -1;
-				dy = 0;
-				break;
-			case 2:
-				dx = 0;
-				dy = 1;
-				break;
-			case 3:
-				dx = 0;
-				dy = -1;
-				break;
-			}
+		float dx = targetX - x;
+		float dy = targetY - y;
 
-			x += dx * movementSpeed;
-			y += dy * movementSpeed;
+		float magnitude = sqrt(dx * dx + dy * dy);
+
+
+		if (magnitude > 0) {
+			dx /= magnitude;
+			dy /= magnitude;
+
+			x += round(dx * movementSpeed);
+			y += round(dy * movementSpeed);
 		}
 	}
 	
@@ -323,9 +330,9 @@ public:
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
 
-		allies[0] = new Ally(255, 0, 0, gameRenderer, 2, 32, 32);
-		allies[1] = new Ally(0, 255, 0, gameRenderer, 2, 32, 32);
-		allies[2] = new Ally(0, 0, 255, gameRenderer, 2, 32, 32);
+		allies[0] = new Ally(255, 0, 0, gameRenderer, 1, 32, 32);
+		allies[1] = new Ally(0, 255, 0, gameRenderer, 1, 32, 32);
+		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
