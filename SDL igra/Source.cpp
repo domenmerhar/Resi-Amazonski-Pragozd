@@ -1,7 +1,7 @@
 #include <SDL.h>
 #include <iostream>
 #include <vector>
-
+#include <ctime>
 
 using namespace std;
 
@@ -172,6 +172,7 @@ public:
 	}
 };
 
+
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 
@@ -239,11 +240,20 @@ public:
 							playerSpawnSquares[i]->GetX() - 100 <= x && x <= playerSpawnSquares[i]->GetX() + 100 &&
 							playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
 							) {
+							if (i == 4) {
+								int x = rand() % (Util::windowWidth - player->getWidth() * 2);
+								int y = rand() % (Util::windowHeight - player->getHeight() * 2);
 
-							player->SetPosition(
-								playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
-								playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
-							);
+								player->SetPosition(x, y);
+							}
+							else
+							{
+								player->SetPosition(
+									playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
+									playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
+								);
+
+							}
 							HideSpawnSquares();
 							break;
 						}
@@ -314,6 +324,7 @@ public:
 };
 
 int main(int argc, char* argv[]) {
+	srand(time(NULL));
 
 	bool isFullscreen = false;
 
