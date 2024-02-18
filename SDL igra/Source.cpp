@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <ctime>
+#include <cmath>
 
 using namespace std;
 
@@ -34,6 +35,14 @@ public:
 		else {
 			return windowHeight - height;
 		}
+	}
+
+	static int GetRandomX(int width) {
+		return rand() % (windowWidth - width * 2);
+	}
+
+	static int GetRandomY(int height) {
+		return rand() % (windowHeight - height);
 	}
 };
 
@@ -94,6 +103,10 @@ public:
 
 		UpdateSourceRectangle();
 		this->visible = visible;
+	}
+
+	GameObject() {
+		Init(255, 255, 255, NULL, 0, 0, 0, 32, 32, true);
 	}
 
 	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
@@ -172,9 +185,73 @@ public:
 	}
 };
 
+class Ally : public GameObject {
+	int spawnX, spawnY;
+public:
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+
+		this->renderer = renderer;
+		spawnX = x = Util::GetRandomX(width);
+		spawnY = y = Util::GetRandomY(height);
+		this->movementSpeed = movementSpeed;
+
+		UpdateSourceRectangle();
+		visible = true;
+	}
+
+	Ally(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
+		Init(red, green, blue, renderer, movementSpeed, width, height);
+	}
+
+	void Move() {
+		if (visible) {
+			int moveSet = rand() % 4;
+
+			int dx = 0, dy = 0;
+
+			switch (moveSet)
+			{
+			case 0:
+				dx = 1;
+				dy = 0;
+				break;
+			case 1:
+				dx = -1;
+				dy = 0;
+				break;
+			case 2:
+				dx = 0;
+				dy = 1;
+				break;
+			case 3:
+				dx = 0;
+				dy = -1;
+				break;
+			}
+
+			x += dx * movementSpeed;
+			y += dy * movementSpeed;
+		}
+	}
+	
+	void Hide() {
+		visible = false;
+		x = spawnX;
+		y = spawnY;
+	}
+};
 
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
+vector<Ally*> allies(3);
 
 class Game
 {
@@ -185,6 +262,30 @@ class Game
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Hide();
+		}
+	}
+
+	void RenderAllies() {
+		if (allies[0]->GetIsVisible()) {
+			for (int i = 0; i < allies.size(); i++) {
+				allies[i]->Render();
+			}
+		}
+	}
+
+	void UpdateAllies() {
+		if (allies[0]->GetIsVisible()) {
+			for (int i = 0; i < allies.size(); i++) {
+				allies[i]->Update();
+			}
+		}
+	}	
+
+	void UpdateSpawnSquares() {
+		if (playerSpawnSquares[0]->GetIsVisible()) {
+			for (int i = 0; i < playerSpawnSquares.size(); i++) {
+				playerSpawnSquares[i]->Update();
+			}
 		}
 	}
 		
@@ -221,6 +322,14 @@ public:
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
+
+		allies[0] = new Ally(255, 0, 0, gameRenderer, 2, 32, 32);
+		allies[1] = new Ally(0, 255, 0, gameRenderer, 2, 32, 32);
+		allies[2] = new Ally(0, 0, 255, gameRenderer, 2, 32, 32);
+
+		for (int i = 0; i < allies.size(); i++) {
+			allies[i]->Show();
+		}
 	}
 
 	void HandleEvents() {
@@ -241,8 +350,8 @@ public:
 							playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
 							) {
 							if (i == 4) {
-								int x = rand() % (Util::windowWidth - player->getWidth() * 2);
-								int y = rand() % (Util::windowHeight - player->getHeight() * 2);
+								int x = Util::GetRandomX(player->getWidth());
+								int y = Util::GetRandomY(player->getHeight());
 
 								player->SetPosition(x, y);
 							}
@@ -266,13 +375,15 @@ public:
 	void Update() {
 		player->Update();
 
-		for (int i = 0; i < playerSpawnSquares.size(); i++) {
-			playerSpawnSquares[i]->Update();
-		}
+		UpdateAllies();
+
+		UpdateSpawnSquares();
 	};
 
 	void Render() {
 		SDL_RenderClear(gameRenderer);
+
+		RenderAllies();
 
 		player->Render();
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
@@ -338,6 +449,10 @@ int main(int argc, char* argv[]) {
 		frameManager.StartFrame();
 
 		player->HandleInput();
+		for (int i = 0; i < allies.size(); i++) {
+			allies[i]->Move();
+		}
+
 		game->HandleEvents();
 		game->Update();
 		game->Render();
