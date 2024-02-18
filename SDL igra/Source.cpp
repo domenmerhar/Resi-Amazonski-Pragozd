@@ -3,9 +3,41 @@
 
 using namespace std;
 
+class Util {
+public:
+	static const int windowWidth = 800;
+	static const int windowHeight= 600;
+
+	static bool WithinBoundsX(int x,  int width) {
+		return x >= 0 && x <= windowWidth - width * 2;
+	}
+
+	static bool WithinBoundsY(int y, int height) {
+		return y >= 0 && y <= windowHeight - height;
+	}
+
+	static int ResetX(int x, int width) {
+		if (x < 0) {
+			return 0;
+		}
+		else {
+			return windowWidth - width * 2;
+		}
+	}
+
+	static int ResetY(int y, int height) {
+		if (y < 0) {
+			return 0;
+		}
+		else {
+			return windowHeight - height;
+		}
+	}
+};
+
 class GameObject {
 protected:
-	int x, y, movementSpeed;
+	int x, y, movementSpeed, width, height;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -13,8 +45,11 @@ protected:
 	SDL_Surface* tempSurface;
 
 public:
-	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed) {
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, 32, 32, 16, 0, 0, 0, 0);
+	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -26,17 +61,28 @@ public:
 		this->movementSpeed = movementSpeed;
 	}
 
+	void UpdateSourceRectangle() {
+		sourceRectangle.h = height;
+		sourceRectangle.w = width;
+		sourceRectangle.x = 0;
+		sourceRectangle.y = 0;
+	}
+
 	void Update() {
 		/*x += movementSpeed;
 		y += movementSpeed;*/
 
-		sourceRectangle.h = 64;
-		sourceRectangle.w = 64;
-		sourceRectangle.x = 0;
-		sourceRectangle.y = 0;
+		UpdateSourceRectangle();
 
-		destinationRectangle.x = x;
-		destinationRectangle.y = y;
+		if (Util::WithinBoundsX(x, width)) destinationRectangle.x = x;
+		else 
+			x = destinationRectangle.x = Util::ResetX(x, width);
+
+		if(Util::WithinBoundsY(y, height * 2)) destinationRectangle.y = y;
+		else y = destinationRectangle.y = Util::ResetY(y, height * 2);
+
+		//cout << "x: " << x << " y: " << y << endl;
+
 		destinationRectangle.w = sourceRectangle.w * 2;
 		destinationRectangle.h = sourceRectangle.h * 2;
 	}
@@ -57,7 +103,6 @@ public:
 		SDL_PumpEvents(); // Update the internal key state
 
 		const Uint8* keys = SDL_GetKeyboardState(NULL);
-
 
 		float dx = 0, dy = 0;
 
@@ -82,10 +127,9 @@ public:
 		}
 
 		// Update the position
-		x += dx * movementSpeed;
+		x +=  dx * movementSpeed;
 		y += dy * movementSpeed;
 	}
-
 };
 
 
@@ -126,7 +170,7 @@ public:
 			isRunning = true;
 		}
 
-		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5);
+		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5, 32, 32);
 	}
 
 	void HandleEvents() {
@@ -195,15 +239,13 @@ public:
 };
 
 int main(int argc, char* argv[]) {
-	const int height = 800;
-	const int width = 600;
 
 	bool isFullscreen = false;
 
 	FrameManager frameManager;
 
 	Game *game = new Game();
-	game->Init("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, height, width, isFullscreen);
+	game->Init("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);
 
 	while (game->IsRunning()) {
 
