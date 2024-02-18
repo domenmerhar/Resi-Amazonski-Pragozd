@@ -59,17 +59,7 @@ public:
 		const Uint8* keys = SDL_GetKeyboardState(NULL);
 
 
-		int dx = 0, dy = 0;
-
-		// Check for diagonal movement
-		bool isDiagonal = (dx != 0 && dy != 0);
-
-		// If diagonal movement detected, adjust dx and dy
-		if (isDiagonal) {
-			// Scale down both dx and dy equally
-			dx = (int)(dx * diagonalSpeedMultiplier);
-			dy = (int)(dy * diagonalSpeedMultiplier);
-		}
+		float dx = 0, dy = 0;
 
 		// Determine the movement direction based on key states
 		if (keys[SDL_SCANCODE_UP]) {
@@ -83,6 +73,12 @@ public:
 		}
 		if (keys[SDL_SCANCODE_RIGHT]) {
 			dx += 1;
+		}
+
+		// If diagonal movement detected, adjust dx and dy
+		if (dx != 0 && dy != 0) {
+			dx = dx * diagonalSpeedMultiplier;
+			dy = dy * diagonalSpeedMultiplier;
 		}
 
 		// Update the position
