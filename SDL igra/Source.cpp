@@ -323,7 +323,7 @@ public:
 			isRunning = true;
 		}
 
-		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5, 32, 32, true);
+		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5, 32, 32, false);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
 		playerSpawnSquares[1] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, 0, 0, 64, 64, true);
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
@@ -348,30 +348,33 @@ public:
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					int x = event.button.x;
-					int y = event.button.y;
+					if (playerSpawnSquares[0]->GetIsVisible()) {
+						int x = event.button.x;
+						int y = event.button.y;
 
-					for (int i = 0; i < playerSpawnSquares.size(); i++) {
-						if (
-							playerSpawnSquares[i]->GetX() - 100 <= x && x <= playerSpawnSquares[i]->GetX() + 100 &&
-							playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
-							) {
-							if (i == 4) {
-								int x = Util::GetRandomX(player->getWidth());
-								int y = Util::GetRandomY(player->getHeight());
+						for (int i = 0; i < playerSpawnSquares.size(); i++) {
+							if (
+								playerSpawnSquares[i]->GetX() - 100 <= x && x <= playerSpawnSquares[i]->GetX() + 100 &&
+								playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
+								) {
+								if (i == 4) {
+									int x = Util::GetRandomX(player->getWidth());
+									int y = Util::GetRandomY(player->getHeight());
 
-								player->SetPosition(x, y);
+									player->SetPosition(x, y);
+								}
+								else
+								{
+									player->SetPosition(
+										playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
+										playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
+									);
+
+								}
+								player->Show();
+								HideSpawnSquares();
+								break;
 							}
-							else
-							{
-								player->SetPosition(
-									playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
-									playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
-								);
-
-							}
-							HideSpawnSquares();
-							break;
 						}
 					}
 				}
