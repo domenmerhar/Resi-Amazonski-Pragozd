@@ -59,6 +59,8 @@ public:
 		this->x = x;
 		this->y = y;
 		this->movementSpeed = movementSpeed;
+
+		UpdateSourceRectangle();
 	}
 
 	void UpdateSourceRectangle() {
@@ -138,15 +140,13 @@ Player* player;
 class Game
 {
 	bool isRunning = false;
-	SDL_Window* window;
+	SDL_Window* window = NULL;
 	SDL_Renderer* gameRenderer;
 		
 public:
-	Game() {};
-	~Game() {};
-
-	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
+	Game(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
+
 		if (fullscreen) {
 			flags = SDL_WINDOW_FULLSCREEN;
 		}
@@ -210,7 +210,7 @@ public:
 };
 
 class FrameManager {
-	Uint32 frameStart;
+	Uint32 frameStart = NULL;
 	int FPS;
 	int frameDelay;
 
@@ -244,8 +244,7 @@ int main(int argc, char* argv[]) {
 
 	FrameManager frameManager;
 
-	Game *game = new Game();
-	game->Init("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);
+	Game *game = new Game("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);
 
 	while (game->IsRunning()) {
 
