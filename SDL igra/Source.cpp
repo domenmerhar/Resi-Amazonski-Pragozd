@@ -213,10 +213,12 @@ public:
 class Tree{
 	int x, y, width, height;
 	bool visible;
+
 	int framesToBurn;
 	bool isBurning;
 	float timeToBurn;
 	bool isBurnt;
+	bool canBeBurnt;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -268,7 +270,8 @@ public:
 		if (visible) {
 			UpdateSourceRectangle();
 			UpdateDestinationRectangle();
-			Burn();
+			
+			if(canBeBurnt) Burn();
 		}
 	}
 
@@ -276,7 +279,7 @@ public:
 		if (visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
 	}
 
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, bool visible, float timeToBurn, int FPS) {
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, float timeToBurn, int FPS) {
 		this->width = width;
 		this->height = height;
 
@@ -297,16 +300,15 @@ public:
 		this->timeToBurn = timeToBurn;
 		ResetFramesToBurn();
 
-		isBurning = visible;
-		isBurnt = false;
+		isBurnt = isBurning = canBeBurnt = false;
 	}
 
 	Tree() {
-		Init(255, 255, 255, NULL, 0, 0, 32, 32, true, 5, 60);
+		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, 60);
 	}
 
-	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, bool visible, float timeToBurn, int FPS) {
-		Init(red, green, blue, renderer, x, y, width, height, visible, timeToBurn, FPS);
+	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, float timeToBurn, int FPS) {
+		Init(red, green, blue, renderer, x, y, width, height, timeToBurn, FPS);
 	}
 
 	void Hide() {
@@ -366,6 +368,12 @@ public:
 
 	bool GetIsBurning() {
 		return isBurning;
+	}
+
+	void StartBurning() {
+		isBurning = true;
+		canBeBurnt = true;
+		ResetFramesToBurn();
 	}
 };
 
@@ -490,6 +498,8 @@ public:
 	}
 
 	bool IsTreeInRange(Tree* tree, int range) {
+		if (!tree->GetIsBurning() && !tree->GetIsVisible()) return false;
+
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
 
@@ -517,10 +527,50 @@ public:
 	}
 };
 
+class Forest{
+	const int rows = 19;
+	const int columns = 25;
+	const int tileSize = 32;
+
+	Tree *trees[19][25];
+
+	void FillTrees(SDL_Renderer* renderer) {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column] = new Tree(forestGreen.green, forestGreen.red, forestGreen.blue,
+					renderer, column * tileSize, row * tileSize,
+					tileSize, tileSize, 5, 60);
+			}
+		}
+	}
+
+public:
+	Forest(SDL_Renderer* renderer) {
+		FillTrees(renderer);
+	}
+
+	void Render() {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column]->Render();
+			}
+		}
+	}
+
+	void Update() {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column]->Update();
+			}
+		}
+	}
+};
+
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
 vector<Tree*> trees(1);
+Forest* forest;
 
 class Game
 {
@@ -610,7 +660,9 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		trees[0] = new Tree(255, 0, 0, gameRenderer, 400, 300, 32, 32, true,1003, 60);
+		trees[0] = new Tree(255, 0, 0, gameRenderer, 400, 300, 32, 32, 1003, 60);
+
+		 forest = new Forest(gameRenderer);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -666,6 +718,7 @@ public:
 		player->HandleTreeCollision(trees[0]);
 
 		trees[0]->Update();
+		forest->Update();
 		
 
 		UpdateAllies();
@@ -677,6 +730,7 @@ public:
 		SDL_RenderClear(gameRenderer);
 
 		trees[0]->Render();
+		forest->Render();
 
 		RenderAllies();
 
@@ -698,39 +752,6 @@ public:
 
 	bool IsRunning() { 
 		return isRunning;
-	}
-};
-
-class Tilemap {
-	const int columnns = 19;
-	const int rows = 25;
-	const int tileSize = 32;
-
-	int tilemap[25][19];
-
-	void FillTrees() {
-		for (int i = 0; i < 25; i++) {
-			for (int j = 0; j < 19; j++) {
-				tilemap[i][j] = 0;
-			}
-		}
-	}
-
-public:
-	Tilemap() {
-		FillTrees();
-	}
-
-	void Render() {
-		for (int i = 0; i < 25; i++) {
-			for (int j = 0; j < 19; j++) {
-				if (tilemap[i][j] == 0) {
-				}
-			}
-		}
-	}
-
-	void Update() {
 	}
 };
 
