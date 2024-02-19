@@ -14,6 +14,7 @@ struct Color {
 };
 
 Color forestGreen{ 55, 178, 77 };
+Color gray{ 200, 200, 200 };
 
 class FrameManager {
 	Uint32 frameStart = NULL;
@@ -216,11 +217,14 @@ public:
 class Tree{
 	int x, y, width, height;
 
-	int framesToBurn;
-	bool isBurning;
+	int framesToDestruction;
 	float timeToBurn;
-	bool isBurnt;
-	bool canBeBurnt;
+
+	float timeToExcavate;
+
+	bool inDestruction;
+	bool isDestroyed;
+	bool canBeDestroyed;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -243,10 +247,10 @@ class Tree{
 	}
 
 	void Burn() {
-		framesToBurn--;
+		framesToDestruction--;
 
-		if (framesToBurn <= 0) {
-			isBurning = false;
+		if (framesToDestruction <= 0) {
+			inDestruction = false;
 			//SetColor(88, 57, 39);
 			
 			tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
@@ -254,7 +258,7 @@ class Tree{
 			texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 			SDL_FreeSurface(tempSurface);
 			
-			isBurnt = true;
+			isDestroyed = true;
 		}
 	}
 	
@@ -264,13 +268,21 @@ class Tree{
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 	}
+
+	void ResetFramesToBurn() {
+		framesToDestruction = timeToBurn * 60;
+	}
+
+	void ResetFramesToExcavate() {
+		framesToDestruction = timeToExcavate * 60;
+	}
 	
 public:
 	void Update() {
 		UpdateSourceRectangle();
 		UpdateDestinationRectangle();
 			
-		if(canBeBurnt && isBurning) Burn();
+		if(canBeDestroyed && inDestruction) Burn();
 	}
 
 	void Render() {
@@ -293,11 +305,15 @@ public:
 		this->y = y;
 
 		UpdateSourceRectangle();
+
 		this->timeToBurn = timeToBurn;
+		timeToExcavate = timeToBurn * 2;
+
 		ResetFramesToBurn();
 
-		isBurnt = false;
-		isBurning = canBeBurnt = false;
+		isDestroyed = false;
+		inDestruction = canBeDestroyed = false;
+
 	}
 
 	Tree() {
@@ -334,12 +350,8 @@ public:
 		return boundingBox;
 	}
 
-	void ResetFramesToBurn() {
-		framesToBurn = timeToBurn * 60;
-	}
-
 	void Extinguish() {
-		canBeBurnt = isBurning = false;
+		canBeDestroyed = inDestruction = false;
 		
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, forestGreen.red, forestGreen.green, forestGreen.blue));
@@ -347,21 +359,32 @@ public:
 		SDL_FreeSurface(tempSurface);
 	}
 
-	bool GetIsBurnt() {
-		return isBurnt;
+	bool GetIsDestroyed() {
+		return isDestroyed;
 	}
 
-	bool GetIsBurning() {
-		return isBurning;
-	}
+	bool GetIsInDestruction() {
+		return inDestruction;
+	};
 
 	void StartBurning() {
-		isBurning = true;
-		canBeBurnt = true;
+		inDestruction = true;
+		canBeDestroyed = true;
 		ResetFramesToBurn();
 
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 0));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+	}
+
+	void StartExcavating() {
+		inDestruction = true;
+		canBeDestroyed = true;
+		ResetFramesToExcavate();
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, gray.red, gray.green, gray.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 	}
@@ -431,7 +454,7 @@ public:
 	}
 
 	bool IsTreeInRange(Tree* tree, int range) {
-		if (!tree->GetIsBurning())return false;
+		if (!tree->GetIsInDestruction())return false;
 
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
@@ -457,7 +480,7 @@ public:
 				SDL_Rect allyBoundingBox = GetBoundingBox();
 				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
 
-				if (tree->GetIsBurning() && SDL_HasIntersection(&allyBoundingBox, &treeBoundingBox)) {
+				if (tree->GetIsInDestruction() && SDL_HasIntersection(&allyBoundingBox, &treeBoundingBox)) {
 					tree->Extinguish();
 					GenerateRandomTarget();
 					break;
@@ -511,12 +534,12 @@ class Forest{
 		vector<Tree*>::iterator it = burningTrees.begin();
 
 		while (it != burningTrees.end()) {
-			if ((*it)->GetIsBurnt()) {
+			if ((*it)->GetIsDestroyed()) {
 				it = burningTrees.erase(it);
 				burntTrees++;
 				CalculateBurntTreePercentage();
 			}
-			else if (!(*it)->GetIsBurning()) {
+			else if (!(*it)->GetIsInDestruction()) {
 				it = burningTrees.erase(it);
 			}
 			else {
@@ -545,7 +568,7 @@ public:
 
 	bool CanBurn(int row, int column) {
 		if (row < 0 || row >= rows || column < 0 || column >= columns) return false;
-		if (trees[row][column]->GetIsBurnt() || trees[row][column]->GetIsBurning()) return false;
+		if (trees[row][column]->GetIsDestroyed() || trees[row][column]->GetIsInDestruction()) return false;
 
 		return true;
 	}
@@ -564,6 +587,23 @@ public:
 		}
 		else {
 			RandomStartBurning();
+		}
+	}
+
+	void StartExcavating(int row, int column) {
+		trees[row][column]->StartExcavating();
+		burningTrees.push_back(trees[row][column]);
+	}
+
+	void RandomStartExcavating() {
+		int row = rand() % rows;
+		int column = rand() % columns;
+
+		if (CanBurn(row, column)) {
+			StartExcavating(row, column);
+		}
+		else {
+			RandomStartExcavating();
 		}
 	}
 	
@@ -635,7 +675,7 @@ public:
 				SDL_Rect playerBoundingBox = GetBoundingBox();
 				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
 
-				if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
+				if (!tree->GetIsDestroyed() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
 					tree->Extinguish();
 				}
 			}
@@ -671,7 +711,7 @@ public:
 		if (clockToSpawnFire >= framesToSpawnFire) {
 			clockToSpawnFire = 0;
 
-			forest->RandomStartBurning();
+			forest->RandomStartExcavating();
 		}
 	}
 };
@@ -773,9 +813,9 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		forest = new Forest(gameRenderer, 0.5f);
+		forest = new Forest(gameRenderer, 2);
 
-		spawner = new Spawner(3, forest);
+		spawner = new Spawner(1, forest);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
