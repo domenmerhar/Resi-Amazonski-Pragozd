@@ -274,13 +274,7 @@ public:
 	}
 
 	void Render() {
-		if (renderer == nullptr || texture == nullptr) {
-			cout << "Renderer or Texture is null. Skipping render." << endl;
-			return;
-		}
-
 		SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
-
 	}
 
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, float timeToBurn, int FPS) {
@@ -453,14 +447,21 @@ public:
 		targetY = tree->GetY() + tree->getHeight() / 2;
 	}
 
-	void HandleTreeCollision(Tree* tree) {
-		if (visible) {
-			SDL_Rect playerBoundingBox = GetBoundingBox();
-			SDL_Rect treeBoundingBox = tree->GetBoundingBox();
+	void HandleTreeCollision(vector<Tree*> burningTrees) {
+		for (Tree* tree : burningTrees) {
+			SDL_Rect allyBoundingBox = GetBoundingBox();
+		}
 
-			if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
-				tree->Extinguish();
-				GenerateRandomTarget();
+		for (Tree* tree : burningTrees) {
+			if (visible && tree != nullptr) {
+				SDL_Rect allyBoundingBox = GetBoundingBox();
+				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
+
+				if (tree->GetIsBurning() && SDL_HasIntersection(&allyBoundingBox, &treeBoundingBox)) {
+					tree->Extinguish();
+					GenerateRandomTarget();
+					break;
+				}
 			}
 		}
 	}
@@ -487,6 +488,7 @@ class Forest{
 			}
 		}
 	}
+
 	void UpdateTrees() {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
@@ -502,6 +504,19 @@ class Forest{
 			}
 		}
 	}		
+
+	void updateBurningTrees() {
+		auto it = burningTrees.begin();
+
+		while (it != burningTrees.end()) {
+			if (!(*it)->GetIsBurning()) {
+				it = burningTrees.erase(it);
+			}
+			else {
+				++it;
+			}
+		}
+	}
 public:
 	Forest(SDL_Renderer* renderer) {
 		FillTrees(renderer);
@@ -651,22 +666,25 @@ class Game
 			}
 		}
 	}
-		
-
-	/*
-	void CheckAllyBehavior() {
+			
+	void CheckAllyBehavior(vector<Tree *> burningTrees) {
 		for (int i = 0; i < allies.size(); i++) {
 			if (allies[i]->GetIsVisible()) {
-				for (int j = 0; j < trees.size(); j++) {
-					if (trees[j]->GetIsBurning()) {
-						if (allies[i]->IsTreeInRange(trees[j], 200)) {
-							allies[i]->SetTarget(trees[j]);
-						}
+				for (Tree* tree : burningTrees) {
+					if (allies[i]->IsTreeInRange(tree, 300)) {
+						allies[i]->SetTarget(tree);
 					}
 				}
 			}
 		}
-	}*/
+	}
+
+	void HandleAlliesCollision(vector<Tree*> burningTrees) {
+		for (int ally = 0; ally < 3; ally++) {
+			allies[ally]->HandleTreeCollision(burningTrees);
+		}
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -676,12 +694,10 @@ public:
 		}
 
 		if (SDL_Init(SDL_INIT_EVERYTHING) == 0) {
-			cout <<"Subsystems Initialized!..." << endl;
 
 			window = SDL_CreateWindow(title, x, y, width, height, fullscreen);
 
 			if (window) {
-				cout << "Window created!" << endl;
 			}
 
 			gameRenderer = SDL_CreateRenderer(window, -1, 0);
@@ -708,6 +724,9 @@ public:
 
 		forest = new Forest(gameRenderer);
 		forest->StartBurning(5, 5);
+		forest->StartBurning(5, 6);
+		forest->StartBurning(5, 7);
+		forest->StartBurning(5, 8);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -764,7 +783,9 @@ public:
 
 		forest->Update();
 		
-
+		CheckAllyBehavior(forest->GetBurningTrees());
+		HandleAlliesCollision(forest->GetBurningTrees());
+		
 		UpdateAllies();
 
 		UpdateSpawnSquares();
