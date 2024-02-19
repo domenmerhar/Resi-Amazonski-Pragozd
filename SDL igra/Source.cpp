@@ -6,10 +6,45 @@
 
 using namespace std;
 
+
+class FrameManager {
+	Uint32 frameStart = NULL;
+	int FPS;
+	int frameDelay;
+
+public:
+	FrameManager() {
+		FPS = 60;
+		frameDelay = 1000 / FPS;
+	};
+
+	FrameManager(int FPS) {
+		this->FPS = FPS;
+		frameDelay = 1000 / FPS;
+	};
+
+	void StartFrame() {
+		frameStart = SDL_GetTicks();
+	};
+
+	void EndFrame() {
+		int frameTime = SDL_GetTicks() - frameStart;
+
+		if (frameDelay > frameTime) {
+			SDL_Delay(frameDelay - frameTime);
+		}
+	}
+
+	int getFPS() {
+		return FPS;
+	}
+};
+
+
 class Util {
 public:
 	static const int windowWidth = 800;
-	static const int windowHeight= 600;
+	static const int windowHeight= 608;
 
 	static bool WithinBoundsX(int x,  int width) {
 		return x >= 0 && x <= windowWidth - width * 2;
@@ -120,6 +155,132 @@ public:
 	void Show() {
 		visible = true;
 	}	
+
+	bool GetIsVisible() {
+		return visible;
+	}
+
+	int GetX() {
+		return x;
+	}
+
+	int GetY() {
+		return y;
+	}
+
+	void SetPosition(int x, int y) {
+		this->x = x;
+		this->y = y;
+	}
+
+	int getHeight() {
+		return height;
+	}
+
+	int getWidth() {
+		return width;
+	}
+};
+
+class Fire {
+	int x, y, width, height;
+	bool visible;
+	int framesToBurn;
+	bool isBurning;
+
+	SDL_Texture* texture;
+	SDL_Rect sourceRectangle, destinationRectangle;
+	SDL_Renderer* renderer;
+	SDL_Surface* tempSurface;
+
+	void UpdateSourceRectangle() {
+		sourceRectangle.h = height;
+		sourceRectangle.w = width;
+		sourceRectangle.x = 0;
+		sourceRectangle.y = 0;
+	}
+
+	void UpdateDestinationRectangle() {
+		destinationRectangle.x = x;
+		destinationRectangle.y = y;
+
+		destinationRectangle.w = sourceRectangle.w * 2;
+		destinationRectangle.h = sourceRectangle.h * 2;
+	}
+
+	void Burn() {
+		if (isBurning) {
+			framesToBurn--;
+
+			if (framesToBurn <= 0) {
+				isBurning = false;
+				//SetColor(88, 57, 39);
+
+				SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+				SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 88, 57, 39));
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+		}
+	}
+	
+	void SetColor(int red, int green, int blue) {
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+	}
+	
+public:
+	void Update() {
+		if (visible) {
+			UpdateSourceRectangle();
+			UpdateDestinationRectangle();
+			Burn();
+		}
+	}
+
+	void Render() {
+		if (visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
+	}
+
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, bool visible, float timeToBurn, int FPS) {
+		this->width = width;
+		this->height = height;
+
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+		//SetColor(red, green, blue);
+
+		this->renderer = renderer;
+		this->x = x;
+		this->y = y;
+
+		UpdateSourceRectangle();
+		this->visible = visible;
+		this->framesToBurn = timeToBurn * FPS;
+		isBurning = visible;
+	}
+
+	Fire() {
+		Init(255, 255, 255, NULL, 0, 0, 32, 32, true, 5, 60);
+	}
+
+	Fire(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, bool visible, float timeToBurn, int FPS) {
+		Init(red, green, blue, renderer, x, y, width, height, visible, timeToBurn, FPS);
+	}
+
+	void Hide() {
+		visible = false;
+	}
+
+	void Show() {
+		visible = true;
+	}
 
 	bool GetIsVisible() {
 		return visible;
@@ -259,6 +420,7 @@ public:
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
+Fire* fire;
 
 class Game
 {
@@ -330,9 +492,11 @@ public:
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
 
-		allies[0] = new Ally(255, 0, 0, gameRenderer, 1, 32, 32);
-		allies[1] = new Ally(0, 255, 0, gameRenderer, 1, 32, 32);
+		allies[0] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
+		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
+
+		fire = new Fire(255, 0, 0, gameRenderer, 100, 100, 32, 32, true, 3, 60);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -383,7 +547,10 @@ public:
 	};
 
 	void Update() {
+
 		player->Update();
+
+		fire->Update();
 
 		UpdateAllies();
 
@@ -393,7 +560,10 @@ public:
 	void Render() {
 		SDL_RenderClear(gameRenderer);
 
+		fire->Render();
+
 		RenderAllies();
+
 
 		player->Render();
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
@@ -415,32 +585,36 @@ public:
 	}
 };
 
-class FrameManager {
-	Uint32 frameStart = NULL;
-	int FPS;
-	int frameDelay;
+class Tilemap {
+	const int columnns = 19;
+	const int rows = 25;
+	const int tileSize = 32;
+
+	int tilemap[25][19];
+
+	void FillTrees() {
+		for (int i = 0; i < 25; i++) {
+			for (int j = 0; j < 19; j++) {
+				tilemap[i][j] = 0;
+			}
+		}
+	}
 
 public:
-	FrameManager() {
-		FPS = 60;
-		frameDelay = 1000 / FPS;
-	};
+	Tilemap() {
+		FillTrees();
+	}
 
-	FrameManager(int FPS) {
-		this->FPS = FPS;
-		frameDelay = 1000 / FPS;
-	};
-
-	void StartFrame() {
-		frameStart = SDL_GetTicks(); // how much time since the program started
-	};
-
-	void EndFrame() {
-		int frameTime = SDL_GetTicks() - frameStart; // how much time it took to render the frame
-
-		if (frameDelay > frameTime) {
-			SDL_Delay(frameDelay - frameTime);
+	void Render() {
+		for (int i = 0; i < 25; i++) {
+			for (int j = 0; j < 19; j++) {
+				if (tilemap[i][j] == 0) {
+				}
+			}
 		}
+	}
+
+	void Update() {
 	}
 };
 
@@ -452,7 +626,7 @@ int main(int argc, char* argv[]) {
 	FrameManager frameManager;
 
 	Game *game = new Game();
-	game->Init("Game", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
+	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
 
 	while (game->IsRunning()) {
 
