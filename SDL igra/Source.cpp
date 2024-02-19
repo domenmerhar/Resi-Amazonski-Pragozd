@@ -6,6 +6,11 @@
 
 using namespace std;
 
+struct Color {
+	int red, green, blue;
+};
+
+struct Color forestGreen = { 55, 178, 77, };
 
 class FrameManager {
 	Uint32 frameStart = NULL;
@@ -39,7 +44,6 @@ public:
 		return FPS;
 	}
 };
-
 
 class Util {
 public:
@@ -78,6 +82,25 @@ public:
 
 	static int GetRandomY(int height) {
 		return rand() % (windowHeight - height);
+	}
+
+	bool CheckCollision(SDL_Rect rect1, SDL_Rect rect2) {
+		int left1 = rect1.x;
+		int right1 = rect1.x + rect1.w;
+		int top1 = rect1.y;
+		int bottom1 = rect1.y + rect1.h;
+
+		int left2 = rect2.x;
+		int right2 = rect2.x + rect2.w;
+		int top2 = rect2.y;
+		int bottom2 = rect2.y + rect2.h;
+
+		if (bottom1 <= top2 || top1 >= bottom2 || right1 <= left2 || left1 >= right2) {
+			return false;
+		}
+		else {
+			return true;
+		}
 	}
 };
 
@@ -180,6 +203,11 @@ public:
 	int getWidth() {
 		return width;
 	}
+
+	SDL_Rect GetBoundingBox() {
+		SDL_Rect boundingBox = { x, y, width, height };
+		return boundingBox;
+	}
 };
 
 class Fire {
@@ -187,6 +215,7 @@ class Fire {
 	bool visible;
 	int framesToBurn;
 	bool isBurning;
+	float timeToBurn;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -262,7 +291,8 @@ public:
 
 		UpdateSourceRectangle();
 		this->visible = visible;
-		this->framesToBurn = timeToBurn * FPS;
+		this->timeToBurn = timeToBurn;
+		ResetFramesToBurn();
 		isBurning = visible;
 	}
 
@@ -306,6 +336,24 @@ public:
 	int getWidth() {
 		return width;
 	}
+
+	SDL_Rect GetBoundingBox() {
+		SDL_Rect boundingBox = { x, y, width, height };
+		return boundingBox;
+	}
+
+	void ResetFramesToBurn() {
+		framesToBurn = timeToBurn * 60;
+	}
+
+	void Extinguish() {
+		this->isBurning = false;
+		
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, forestGreen.red, forestGreen.green, forestGreen.blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+	}
 };
 
 class Player : public GameObject {
@@ -342,6 +390,25 @@ public:
 
 			x += dx * movementSpeed;
 			y += dy * movementSpeed;
+		}
+	}
+
+	void HandleFireCollision(Fire* fire) {
+		if (visible) {
+			SDL_Rect playerBoundingBox = GetBoundingBox();
+			SDL_Rect fireBoundingBox = fire->GetBoundingBox();
+
+			if (fire->GetIsVisible() && SDL_HasIntersection(&playerBoundingBox, &fireBoundingBox)) {
+				fire->Extinguish();
+			}
+		}
+	
+	}
+
+	void Update() {
+		if (visible) {
+			UpdateSourceRectangle();
+			UpdateDestinationRectangle();
 		}
 	}
 };
@@ -549,6 +616,7 @@ public:
 	void Update() {
 
 		player->Update();
+		player->HandleFireCollision(fire);
 
 		fire->Update();
 
