@@ -541,6 +541,18 @@ public:
 		trees[row][column]->StartBurning();
 		burningTrees.push_back(trees[row][column]);
 	}
+
+	void RandomStartBurning() {
+		int row = rand() % rows;
+		int column = rand() % columns;
+
+		if (CanBurn(row, column)) {
+			StartBurning(row, column);
+		}
+		else {
+			RandomStartBurning();
+		}
+	}
 	
 	void RemoveBurningTree(Tree* tree) {
 		vector<Tree*>::iterator it = find(burningTrees.begin(), burningTrees.end(), tree);
@@ -625,10 +637,37 @@ public:
 	}
 };
 
+class Spawner {
+	float timeToSpawnFire;
+	int framesToSpawnFire;
+	int clockToSpawnFire;
+
+	Forest * forest;
+
+public:
+	Spawner(float timeToSpawnFire, Forest *forest) {
+		this->timeToSpawnFire = timeToSpawnFire;
+		framesToSpawnFire = timeToSpawnFire * 60;
+		clockToSpawnFire = 0;
+
+		this->forest = forest;
+	}
+
+	void Update() {
+		clockToSpawnFire++;
+		if (clockToSpawnFire >= framesToSpawnFire) {
+			clockToSpawnFire = 0;
+
+			forest->RandomStartBurning();
+		}
+	}
+};
+
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
 Forest* forest;
+Spawner* spawner;
 
 class Game
 {
@@ -721,12 +760,9 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-
 		forest = new Forest(gameRenderer);
-		forest->StartBurning(5, 5);
-		forest->StartBurning(5, 6);
-		forest->StartBurning(5, 7);
-		forest->StartBurning(5, 8);
+
+		spawner = new Spawner(1, forest);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -785,8 +821,9 @@ public:
 		
 		CheckAllyBehavior(forest->GetBurningTrees());
 		HandleAlliesCollision(forest->GetBurningTrees());
-		
 		UpdateAllies();
+
+		spawner->Update();
 
 		UpdateSpawnSquares();
 	};
