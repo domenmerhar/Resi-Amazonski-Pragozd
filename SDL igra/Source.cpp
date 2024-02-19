@@ -3,14 +3,17 @@
 #include <vector>
 #include <ctime>
 #include <cmath>
+#include <list>
 
 using namespace std;
 
 struct Color {
-	int red, green, blue;
+	int red;
+	int green;
+	int blue;
 };
 
-struct Color forestGreen = { 55, 178, 77, };
+Color forestGreen{ 55, 178, 77 };
 
 class FrameManager {
 	Uint32 frameStart = NULL;
@@ -47,8 +50,8 @@ public:
 
 class Util {
 public:
-	static const int windowWidth = 800;
-	static const int windowHeight= 608;
+	static const int windowWidth = 832;
+	static const int windowHeight= 640;
 
 	static bool WithinBoundsX(int x,  int width) {
 		return x >= 0 && x <= windowWidth - width * 2;
@@ -212,7 +215,6 @@ public:
 
 class Tree{
 	int x, y, width, height;
-	bool visible;
 
 	int framesToBurn;
 	bool isBurning;
@@ -241,20 +243,18 @@ class Tree{
 	}
 
 	void Burn() {
-		if (isBurning) {
-			framesToBurn--;
+		framesToBurn--;
 
-			if (framesToBurn <= 0) {
-				isBurning = false;
-				//SetColor(88, 57, 39);
-
-				SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-				SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 88, 57, 39));
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
-
-				isBurnt = true;
-			}
+		if (framesToBurn <= 0) {
+			isBurning = false;
+			//SetColor(88, 57, 39);
+			
+			tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+			SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 88, 57, 39));
+			texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+			SDL_FreeSurface(tempSurface);
+			
+			isBurnt = true;
 		}
 	}
 	
@@ -267,24 +267,27 @@ class Tree{
 	
 public:
 	void Update() {
-		if (visible) {
-			UpdateSourceRectangle();
-			UpdateDestinationRectangle();
+		UpdateSourceRectangle();
+		UpdateDestinationRectangle();
 			
-			if(canBeBurnt) Burn();
-		}
+		if(canBeBurnt && isBurning) Burn();
 	}
 
 	void Render() {
-		if (visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
+		if (renderer == nullptr || texture == nullptr) {
+			cout << "Renderer or Texture is null. Skipping render." << endl;
+			return;
+		}
+
+		SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
+
 	}
 
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, float timeToBurn, int FPS) {
 		this->width = width;
 		this->height = height;
 
-
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -296,11 +299,11 @@ public:
 		this->y = y;
 
 		UpdateSourceRectangle();
-		this->visible = visible;
 		this->timeToBurn = timeToBurn;
 		ResetFramesToBurn();
 
-		isBurnt = isBurning = canBeBurnt = false;
+		isBurnt = false;
+		isBurning = canBeBurnt = false;
 	}
 
 	Tree() {
@@ -309,18 +312,6 @@ public:
 
 	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, float timeToBurn, int FPS) {
 		Init(red, green, blue, renderer, x, y, width, height, timeToBurn, FPS);
-	}
-
-	void Hide() {
-		visible = false;
-	}
-
-	void Show() {
-		visible = true;
-	}
-
-	bool GetIsVisible() {
-		return visible;
 	}
 
 	int GetX() {
@@ -354,7 +345,7 @@ public:
 	}
 
 	void Extinguish() {
-		this->isBurning = false;
+		canBeBurnt = isBurning = false;
 		
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, forestGreen.red, forestGreen.green, forestGreen.blue));
@@ -374,63 +365,11 @@ public:
 		isBurning = true;
 		canBeBurnt = true;
 		ResetFramesToBurn();
-	}
-};
 
-class Player : public GameObject {
-public:
-	using GameObject::GameObject;
-
-	void HandleInput() {
-		if (visible) {
-			const float diagonalSpeedMultiplier = 0.7071;
-
-			SDL_PumpEvents();
-
-			const Uint8* keys = SDL_GetKeyboardState(NULL);
-
-			float dx = 0, dy = 0;
-
-			if (keys[SDL_SCANCODE_UP]) {
-				dy -= 1;
-			}
-			if (keys[SDL_SCANCODE_DOWN]) {
-				dy += 1;
-			}
-			if (keys[SDL_SCANCODE_LEFT]) {
-				dx -= 1;
-			}
-			if (keys[SDL_SCANCODE_RIGHT]) {
-				dx += 1;
-			}
-
-			if (dx != 0 && dy != 0) {
-				dx = dx * diagonalSpeedMultiplier;
-				dy = dy * diagonalSpeedMultiplier;
-			}
-
-			x += dx * movementSpeed;
-			y += dy * movementSpeed;
-		}
-	}
-
-	void HandleTreeCollision(Tree* tree) {
-		if (visible) {
-			SDL_Rect playerBoundingBox = GetBoundingBox();
-			SDL_Rect treeBoundingBox = tree->GetBoundingBox();
-
-			if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
-				tree->Extinguish();
-			}
-		}
-	
-	}
-
-	void Update() {
-		if (visible) {
-			UpdateSourceRectangle();
-			UpdateDestinationRectangle();
-		}
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 0));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
 	}
 };
 
@@ -498,7 +437,7 @@ public:
 	}
 
 	bool IsTreeInRange(Tree* tree, int range) {
-		if (!tree->GetIsBurning() && !tree->GetIsVisible()) return false;
+		if (!tree->GetIsBurning())return false;
 
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
@@ -528,40 +467,145 @@ public:
 };
 
 class Forest{
-	const int rows = 19;
-	const int columns = 25;
-	const int tileSize = 32;
+	const int rows = 10;
+	const int columns = 13;
+	const int tileSize = 64;
 
-	Tree *trees[19][25];
+	int totalTrees = rows * columns;
+	int burntTrees = 0;
+
+	Tree *trees[10][13];
+	vector<Tree*> burningTrees;
+
 
 	void FillTrees(SDL_Renderer* renderer) {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
-				trees[row][column] = new Tree(forestGreen.green, forestGreen.red, forestGreen.blue,
+				trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
 					renderer, column * tileSize, row * tileSize,
-					tileSize, tileSize, 5, 60);
+					tileSize, tileSize, 10, 60);
 			}
 		}
 	}
-
+	void UpdateTrees() {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column]->Update();
+			}
+		}
+	}
+	
+	void RenderTrees() {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column]->Render();
+			}
+		}
+	}		
 public:
 	Forest(SDL_Renderer* renderer) {
 		FillTrees(renderer);
 	}
 
 	void Render() {
+		RenderTrees();
+	}
+
+	void Update() {
+		UpdateTrees();
+	}
+
+	bool CanBurn(int row, int column) {
+		if (row < 0 || row >= rows || column < 0 || column >= columns) return false;
+		if (trees[row][column]->GetIsBurnt() || trees[row][column]->GetIsBurning()) return false;
+
+		return true;
+	}
+
+	void StartBurning(int row, int column) {
+		trees[row][column]->StartBurning();
+		burningTrees.push_back(trees[row][column]);
+	}
+	
+	void RemoveBurningTree(Tree* tree) {
+		vector<Tree*>::iterator it = find(burningTrees.begin(), burningTrees.end(), tree);
+
+		if (it != burningTrees.end()) {
+			burningTrees.erase(it);
+		}
+	}
+
+	Tree* GetCollidedTree(int x, int y) {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
-				trees[row][column]->Render();
+				if (trees[row][column]->GetBoundingBox().x <= x && x <= trees[row][column]->GetBoundingBox().x + tileSize &&
+					trees[row][column]->GetBoundingBox().y <= y && y <= trees[row][column]->GetBoundingBox().y + tileSize) {
+					return trees[row][column];
+				}
+			}
+		}
+		return nullptr;
+	}
+
+	vector<Tree*> GetBurningTrees() const {
+		return burningTrees;
+	}
+};
+
+class Player : public GameObject {
+public:
+	using GameObject::GameObject;
+
+	void HandleInput() {
+		if (visible) {
+			const float diagonalSpeedMultiplier = 0.7071;
+
+			SDL_PumpEvents();
+
+			const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+			float dx = 0, dy = 0;
+
+			if (keys[SDL_SCANCODE_UP]) {
+				dy -= 1;
+			}
+			if (keys[SDL_SCANCODE_DOWN]) {
+				dy += 1;
+			}
+			if (keys[SDL_SCANCODE_LEFT]) {
+				dx -= 1;
+			}
+			if (keys[SDL_SCANCODE_RIGHT]) {
+				dx += 1;
+			}
+
+			if (dx != 0 && dy != 0) {
+				dx = dx * diagonalSpeedMultiplier;
+				dy = dy * diagonalSpeedMultiplier;
+			}
+
+			x += dx * movementSpeed;
+			y += dy * movementSpeed;
+		}
+	}
+
+	void HandleTreeCollision(vector<Tree*> burningTrees) {
+		for (Tree* tree : burningTrees) {
+			if (visible && tree != nullptr) {
+				SDL_Rect playerBoundingBox = GetBoundingBox();
+				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
+
+				if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
+					tree->Extinguish();
+				}
 			}
 		}
 	}
 
 	void Update() {
-		for (int row = 0; row < rows; row++) {
-			for (int column = 0; column < columns; column++) {
-				trees[row][column]->Update();
-			}
+		if (visible) {
+			UpdateSourceRectangle();
+			UpdateDestinationRectangle();
 		}
 	}
 };
@@ -569,7 +613,6 @@ public:
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
-vector<Tree*> trees(1);
 Forest* forest;
 
 class Game
@@ -596,7 +639,7 @@ class Game
 		if (allies[0]->GetIsVisible()) {
 			for (int i = 0; i < allies.size(); i++) {
 				allies[i]->Update();
-				allies[i]->HandleTreeCollision(trees[0]);		
+				//allies[i]->HandleTreeCollision(trees[0]);		
 			}
 		}
 	}	
@@ -609,11 +652,13 @@ class Game
 		}
 	}
 		
+
+	/*
 	void CheckAllyBehavior() {
 		for (int i = 0; i < allies.size(); i++) {
 			if (allies[i]->GetIsVisible()) {
 				for (int j = 0; j < trees.size(); j++) {
-					if (trees[j]->GetIsVisible() && trees[j]->GetIsBurning()) {
+					if (trees[j]->GetIsBurning()) {
 						if (allies[i]->IsTreeInRange(trees[j], 200)) {
 							allies[i]->SetTarget(trees[j]);
 						}
@@ -621,7 +666,7 @@ class Game
 				}
 			}
 		}
-	}
+	}*/
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -660,9 +705,9 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		trees[0] = new Tree(255, 0, 0, gameRenderer, 400, 300, 32, 32, 1003, 60);
 
-		 forest = new Forest(gameRenderer);
+		forest = new Forest(gameRenderer);
+		forest->StartBurning(5, 5);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -715,9 +760,8 @@ public:
 	void Update() {
 
 		player->Update();
-		player->HandleTreeCollision(trees[0]);
+		player->HandleTreeCollision(forest->GetBurningTrees());
 
-		trees[0]->Update();
 		forest->Update();
 		
 
@@ -729,8 +773,7 @@ public:
 	void Render() {
 		SDL_RenderClear(gameRenderer);
 
-		trees[0]->Render();
-		forest->Render();
+		forest->Render();   
 
 		RenderAllies();
 
@@ -785,3 +828,10 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+
+
+//Burning trees
+//Pass to Player and Allies collision detection
+//Loop over all trees and check for collision
+//If collision, extinguish tree, break loop
+//Delete from array / vector / list / whatever
