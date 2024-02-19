@@ -363,6 +363,10 @@ public:
 	bool GetIsBurnt() {
 		return isBurnt;
 	}
+
+	bool GetIsBurning() {
+		return isBurning;
+	}
 };
 
 class Player : public GameObject {
@@ -426,7 +430,6 @@ class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
 
-
 	int r;
 
 	void GenerateRandomTarget() {
@@ -485,6 +488,33 @@ public:
 		x = spawnX;
 		y = spawnY;
 	}
+
+	bool IsTreeInRange(Tree* tree, int range) {
+		int treeX = tree->GetX() + tree->getWidth() / 2;
+		int treeY = tree->GetY() + tree->getHeight() / 2;
+
+		int distanceSquared = (x - treeX) * (x - treeX) + (y - treeY) * (y - treeY);
+		int rangeSquared = range * range;
+
+		return distanceSquared <= rangeSquared;
+	}
+
+	void SetTarget(Tree* tree) {
+		targetX = tree->GetX() + tree->getWidth() / 2;
+		targetY = tree->GetY() + tree->getHeight() / 2;
+	}
+
+	void HandleTreeCollision(Tree* tree) {
+		if (visible) {
+			SDL_Rect playerBoundingBox = GetBoundingBox();
+			SDL_Rect treeBoundingBox = tree->GetBoundingBox();
+
+			if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
+				tree->Extinguish();
+				GenerateRandomTarget();
+			}
+		}
+	}
 };
 
 Player* player;
@@ -516,6 +546,7 @@ class Game
 		if (allies[0]->GetIsVisible()) {
 			for (int i = 0; i < allies.size(); i++) {
 				allies[i]->Update();
+				allies[i]->HandleTreeCollision(trees[0]);		
 			}
 		}
 	}	
@@ -528,6 +559,19 @@ class Game
 		}
 	}
 		
+	void CheckAllyBehavior() {
+		for (int i = 0; i < allies.size(); i++) {
+			if (allies[i]->GetIsVisible()) {
+				for (int j = 0; j < trees.size(); j++) {
+					if (trees[j]->GetIsVisible() && trees[j]->GetIsBurning()) {
+						if (allies[i]->IsTreeInRange(trees[j], 200)) {
+							allies[i]->SetTarget(trees[j]);
+						}
+					}
+				}
+			}
+		}
+	}
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -566,7 +610,7 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		trees[0] = new Tree(255, 0, 0, gameRenderer, 100, 100, 32, 32, true, 3, 60);
+		trees[0] = new Tree(255, 0, 0, gameRenderer, 400, 300, 32, 32, true,1003, 60);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -622,6 +666,7 @@ public:
 		player->HandleTreeCollision(trees[0]);
 
 		trees[0]->Update();
+		
 
 		UpdateAllies();
 
