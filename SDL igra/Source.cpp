@@ -471,20 +471,22 @@ class Forest{
 	const int rows = 10;
 	const int columns = 13;
 	const int tileSize = 64;
+	float timeToBurn;
 
-	int totalTrees = rows * columns;
+	const int totalTrees = rows * columns;
 	int burntTrees = 0;
+	float burntTreePercentage = 0;
 
 	Tree *trees[10][13];
 	vector<Tree*> burningTrees;
 
 
-	void FillTrees(SDL_Renderer* renderer) {
+	void FillTrees(SDL_Renderer* renderer, float timeToBurn) {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
 				trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
 					renderer, column * tileSize, row * tileSize,
-					tileSize, tileSize, 10, 60);
+					tileSize, tileSize, timeToBurn, 60);
 			}
 		}
 	}
@@ -505,11 +507,16 @@ class Forest{
 		}
 	}		
 
-	void updateBurningTrees() {
-		auto it = burningTrees.begin();
+	void UpdateBurningTrees() {
+		vector<Tree*>::iterator it = burningTrees.begin();
 
 		while (it != burningTrees.end()) {
-			if (!(*it)->GetIsBurning()) {
+			if ((*it)->GetIsBurnt()) {
+				it = burningTrees.erase(it);
+				burntTrees++;
+				CalculateBurntTreePercentage();
+			}
+			else if (!(*it)->GetIsBurning()) {
 				it = burningTrees.erase(it);
 			}
 			else {
@@ -517,9 +524,14 @@ class Forest{
 			}
 		}
 	}
+
+	void CalculateBurntTreePercentage() {
+		burntTreePercentage = (float)burntTrees / totalTrees * 100;
+		if(burntTreePercentage >= 70) cout << "Game over!" << endl;
+	}
 public:
-	Forest(SDL_Renderer* renderer) {
-		FillTrees(renderer);
+	Forest(SDL_Renderer* renderer, float timeToBurn) {
+		FillTrees(renderer, timeToBurn);
 	}
 
 	void Render() {
@@ -528,6 +540,7 @@ public:
 
 	void Update() {
 		UpdateTrees();
+		UpdateBurningTrees();
 	}
 
 	bool CanBurn(int row, int column) {
@@ -760,9 +773,9 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		forest = new Forest(gameRenderer);
+		forest = new Forest(gameRenderer, 0.5f);
 
-		spawner = new Spawner(1, forest);
+		spawner = new Spawner(3, forest);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
