@@ -81,7 +81,7 @@ public:
 	}
 
 	static int GetRandomY(int height) {
-		return rand() % (windowHeight - height);
+		return rand() % (windowHeight - height * 2);
 	}
 
 	bool CheckCollision(SDL_Rect rect1, SDL_Rect rect2) {
@@ -210,12 +210,13 @@ public:
 	}
 };
 
-class Fire {
+class Tree{
 	int x, y, width, height;
 	bool visible;
 	int framesToBurn;
 	bool isBurning;
 	float timeToBurn;
+	bool isBurnt;
 
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
@@ -249,6 +250,8 @@ class Fire {
 				SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 88, 57, 39));
 				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 				SDL_FreeSurface(tempSurface);
+
+				isBurnt = true;
 			}
 		}
 	}
@@ -293,14 +296,16 @@ public:
 		this->visible = visible;
 		this->timeToBurn = timeToBurn;
 		ResetFramesToBurn();
+
 		isBurning = visible;
+		isBurnt = false;
 	}
 
-	Fire() {
+	Tree() {
 		Init(255, 255, 255, NULL, 0, 0, 32, 32, true, 5, 60);
 	}
 
-	Fire(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, bool visible, float timeToBurn, int FPS) {
+	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, bool visible, float timeToBurn, int FPS) {
 		Init(red, green, blue, renderer, x, y, width, height, visible, timeToBurn, FPS);
 	}
 
@@ -354,6 +359,10 @@ public:
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 	}
+
+	bool GetIsBurnt() {
+		return isBurnt;
+	}
 };
 
 class Player : public GameObject {
@@ -393,13 +402,13 @@ public:
 		}
 	}
 
-	void HandleFireCollision(Fire* fire) {
+	void HandleTreeCollision(Tree* tree) {
 		if (visible) {
 			SDL_Rect playerBoundingBox = GetBoundingBox();
-			SDL_Rect fireBoundingBox = fire->GetBoundingBox();
+			SDL_Rect treeBoundingBox = tree->GetBoundingBox();
 
-			if (fire->GetIsVisible() && SDL_HasIntersection(&playerBoundingBox, &fireBoundingBox)) {
-				fire->Extinguish();
+			if (!tree->GetIsBurnt() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
+				tree->Extinguish();
 			}
 		}
 	
@@ -419,8 +428,6 @@ class Ally : public GameObject {
 
 
 	int r;
-
-	int frameCounter = 180;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -455,13 +462,6 @@ public:
 	}
 
 	void Move() {
-		frameCounter--;
-
-		if (frameCounter <= 0) {
-			GenerateRandomTarget();
-			frameCounter = 180;
-		}
-
 		float dx = targetX - x;
 		float dy = targetY - y;
 
@@ -475,6 +475,9 @@ public:
 			x += round(dx * movementSpeed);
 			y += round(dy * movementSpeed);
 		}
+		else {
+			GenerateRandomTarget();
+		}
 	}
 	
 	void Hide() {
@@ -487,7 +490,7 @@ public:
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
-Fire* fire;
+vector<Tree*> trees(1);
 
 class Game
 {
@@ -563,7 +566,7 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		fire = new Fire(255, 0, 0, gameRenderer, 100, 100, 32, 32, true, 3, 60);
+		trees[0] = new Tree(255, 0, 0, gameRenderer, 100, 100, 32, 32, true, 3, 60);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -616,9 +619,9 @@ public:
 	void Update() {
 
 		player->Update();
-		player->HandleFireCollision(fire);
+		player->HandleTreeCollision(trees[0]);
 
-		fire->Update();
+		trees[0]->Update();
 
 		UpdateAllies();
 
@@ -628,7 +631,7 @@ public:
 	void Render() {
 		SDL_RenderClear(gameRenderer);
 
-		fire->Render();
+		trees[0]->Render();
 
 		RenderAllies();
 
