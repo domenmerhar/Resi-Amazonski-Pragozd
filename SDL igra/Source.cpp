@@ -394,7 +394,6 @@ class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
 
-	int r;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -425,7 +424,6 @@ public:
 
 	Ally(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
 		Init(red, green, blue, renderer, movementSpeed, width, height);
-		r = red;
 	}
 
 	void Move() {
@@ -470,12 +468,12 @@ public:
 		targetY = tree->GetY() + tree->getHeight() / 2;
 	}
 
-	void HandleTreeCollision(vector<Tree*> burningTrees) {
-		for (Tree* tree : burningTrees) {
+	void HandleTreeCollision(vector<Tree*> treesInDestruction) {
+		for (Tree* tree : treesInDestruction) {
 			SDL_Rect allyBoundingBox = GetBoundingBox();
 		}
 
-		for (Tree* tree : burningTrees) {
+		for (Tree* tree : treesInDestruction) {
 			if (visible && tree != nullptr) {
 				SDL_Rect allyBoundingBox = GetBoundingBox();
 				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
@@ -497,11 +495,11 @@ class Forest{
 	float timeToBurn;
 
 	const int totalTrees = rows * columns;
-	int burntTrees = 0;
-	float burntTreePercentage = 0;
+	int destroyedTrees = 0;
+	float destroyedTreesPercentage = 0;
 
 	Tree *trees[10][13];
-	vector<Tree*> burningTrees;
+	vector<Tree*> treesInDestruction;
 
 
 	void FillTrees(SDL_Renderer* renderer, float timeToBurn) {
@@ -530,17 +528,17 @@ class Forest{
 		}
 	}		
 
-	void UpdateBurningTrees() {
-		vector<Tree*>::iterator it = burningTrees.begin();
+	void UpdateTreesInDestruction() {
+		vector<Tree*>::iterator it = treesInDestruction.begin();
 
-		while (it != burningTrees.end()) {
+		while (it != treesInDestruction.end()) {
 			if ((*it)->GetIsDestroyed()) {
-				it = burningTrees.erase(it);
-				burntTrees++;
-				CalculateBurntTreePercentage();
+				it = treesInDestruction.erase(it);
+				destroyedTrees++;
+				CalculateDestroyedTreesPercentage();
 			}
 			else if (!(*it)->GetIsInDestruction()) {
-				it = burningTrees.erase(it);
+				it = treesInDestruction.erase(it);
 			}
 			else {
 				++it;
@@ -548,9 +546,9 @@ class Forest{
 		}
 	}
 
-	void CalculateBurntTreePercentage() {
-		burntTreePercentage = (float)burntTrees / totalTrees * 100;
-		if(burntTreePercentage >= 70) cout << "Game over!" << endl;
+	void CalculateDestroyedTreesPercentage() {
+		destroyedTreesPercentage = (float)destroyedTrees / totalTrees * 100;
+		if(destroyedTreesPercentage >= 70) cout << "Game over!" << endl;
 	}
 public:
 	Forest(SDL_Renderer* renderer, float timeToBurn) {
@@ -563,10 +561,10 @@ public:
 
 	void Update() {
 		UpdateTrees();
-		UpdateBurningTrees();
+		UpdateTreesInDestruction();
 	}
 
-	bool CanBurn(int row, int column) {
+	bool CanBeDestroyed(int row, int column) {
 		if (row < 0 || row >= rows || column < 0 || column >= columns) return false;
 		if (trees[row][column]->GetIsDestroyed() || trees[row][column]->GetIsInDestruction()) return false;
 
@@ -575,43 +573,32 @@ public:
 
 	void StartBurning(int row, int column) {
 		trees[row][column]->StartBurning();
-		burningTrees.push_back(trees[row][column]);
+		treesInDestruction.push_back(trees[row][column]);
 	}
 
-	void RandomStartBurning() {
+	void RandomStartDestroying(bool burn) {
 		int row = rand() % rows;
 		int column = rand() % columns;
 
-		if (CanBurn(row, column)) {
-			StartBurning(row, column);
+		if (CanBeDestroyed(row, column)) {
+			if(burn) StartBurning(row, column);
+			else StartExcavating(row, column);
 		}
 		else {
-			RandomStartBurning();
+			RandomStartDestroying(burn);
 		}
 	}
 
 	void StartExcavating(int row, int column) {
 		trees[row][column]->StartExcavating();
-		burningTrees.push_back(trees[row][column]);
-	}
-
-	void RandomStartExcavating() {
-		int row = rand() % rows;
-		int column = rand() % columns;
-
-		if (CanBurn(row, column)) {
-			StartExcavating(row, column);
-		}
-		else {
-			RandomStartExcavating();
-		}
+		treesInDestruction.push_back(trees[row][column]);
 	}
 	
 	void RemoveBurningTree(Tree* tree) {
-		vector<Tree*>::iterator it = find(burningTrees.begin(), burningTrees.end(), tree);
+		vector<Tree*>::iterator it = find(treesInDestruction.begin(), treesInDestruction.end(), tree);
 
-		if (it != burningTrees.end()) {
-			burningTrees.erase(it);
+		if (it != treesInDestruction.end()) {
+			treesInDestruction.erase(it);
 		}
 	}
 
@@ -628,7 +615,7 @@ public:
 	}
 
 	vector<Tree*> GetBurningTrees() const {
-		return burningTrees;
+		return treesInDestruction;
 	}
 };
 
@@ -669,8 +656,8 @@ public:
 		}
 	}
 
-	void HandleTreeCollision(vector<Tree*> burningTrees) {
-		for (Tree* tree : burningTrees) {
+	void HandleTreeCollision(vector<Tree*> treesInDestruction) {
+		for (Tree* tree : treesInDestruction) {
 			if (visible && tree != nullptr) {
 				SDL_Rect playerBoundingBox = GetBoundingBox();
 				SDL_Rect treeBoundingBox = tree->GetBoundingBox();
@@ -711,7 +698,9 @@ public:
 		if (clockToSpawnFire >= framesToSpawnFire) {
 			clockToSpawnFire = 0;
 
-			forest->RandomStartExcavating();
+			bool burnTree = rand() % 2;
+
+			forest->RandomStartDestroying(burnTree);
 		}
 	}
 };
@@ -759,10 +748,10 @@ class Game
 		}
 	}
 			
-	void CheckAllyBehavior(vector<Tree *> burningTrees) {
+	void CheckAllyBehavior(vector<Tree *> treesInDestruction) {
 		for (int i = 0; i < allies.size(); i++) {
 			if (allies[i]->GetIsVisible()) {
-				for (Tree* tree : burningTrees) {
+				for (Tree* tree : treesInDestruction) {
 					if (allies[i]->IsTreeInRange(tree, 300)) {
 						allies[i]->SetTarget(tree);
 					}
@@ -771,9 +760,9 @@ class Game
 		}
 	}
 
-	void HandleAlliesCollision(vector<Tree*> burningTrees) {
+	void HandleAlliesCollision(vector<Tree*> treesInDestruction) {
 		for (int ally = 0; ally < 3; ally++) {
-			allies[ally]->HandleTreeCollision(burningTrees);
+			allies[ally]->HandleTreeCollision(treesInDestruction);
 		}
 	}
 
