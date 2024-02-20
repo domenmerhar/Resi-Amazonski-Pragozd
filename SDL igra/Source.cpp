@@ -451,21 +451,25 @@ public:
 		y = spawnY;
 	}
 
+	bool IsInRange(int x, int y, int range) {
+		int distanceSquared = (this->x - x) * (this->x - x) + (this->y - y) * (this->y - y);
+		int rangeSquared = range * range;
+
+		return distanceSquared <= rangeSquared;
+	}
+
 	bool IsTreeInRange(Tree* tree, int range) {
 		if (!tree->GetIsInDestruction())return false;
 
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
 
-		int distanceSquared = (x - treeX) * (x - treeX) + (y - treeY) * (y - treeY);
-		int rangeSquared = range * range;
-
-		return distanceSquared <= rangeSquared;
+		IsInRange(treeX, treeY, range);
 	}
 
-	void SetTarget(Tree* tree) {
-		targetX = tree->GetX() + tree->getWidth() / 2;
-		targetY = tree->GetY() + tree->getHeight() / 2;
+	void SetTarget(int x, int y, int width, int height) {
+		targetX = x + width / 2;
+		targetY = y + height / 2;
 	}
 
 	void HandleTreeCollision(vector<Tree*> treesInDestruction) {
@@ -687,6 +691,8 @@ class Enemy : public GameObject {
 
 	Forest* forest;
 
+	SDL_Rect boundingBox;
+
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
 		targetY = Util::GetRandomY(height);
@@ -718,6 +724,8 @@ public:
 		SetBig(false);
 
 		visible = true;
+
+		boundingBox = GetBoundingBox();
 	}
 
 	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
@@ -773,16 +781,22 @@ public:
 		SDL_FreeSurface(tempSurface);
 	}
 
+	bool GetIsBig() {
+		return isBig;
+	}
+
 	void HandleCollision(vector<Ally*> allies, vector<Enemy*> enemies, Player *player) {
+		boundingBox = GetBoundingBox();
+
 		if (!visible) return;
 
 		SDL_Rect boundingBox = GetBoundingBox();
 		SDL_Rect playerBoundingBox = player->GetBoundingBox();
-		bool playerIsCloseToAlly = false;
 		bool invinciblePlayer = false;
 
 		for (Ally* ally : allies) {
-			if (visible && ally != nullptr && ally->GetIsVisible()) {
+			bool playerIsCloseToAlly = false;
+			if (ally != nullptr && ally->GetIsVisible()) {
 				SDL_Rect allyBoundingBox = ally->GetBoundingBox();
 
 				if ((abs(playerBoundingBox.x - allyBoundingBox.x) < 100 && abs(playerBoundingBox.y - allyBoundingBox.y) < 100) && !playerIsCloseToAlly) { 
@@ -791,6 +805,7 @@ public:
 				}
 
 				if (SDL_HasIntersection(&allyBoundingBox, &boundingBox)) {
+					cout << "Collision detected with ally!" << endl;
 
 					if (!isBig) Hide();  
 					else if(isBig) {
@@ -806,12 +821,11 @@ public:
 		}
 
 		for (Enemy* enemy : enemies) {
-			if (visible && enemy != nullptr && enemy->GetIsVisible()) {
+			if (enemy != nullptr && enemy->GetIsVisible()) {
 				SDL_Rect enemyBoundingBox = enemy->GetBoundingBox();
 				if (enemy != this) {
 					if (SDL_HasIntersection(&enemyBoundingBox, &boundingBox) && isBig == false) {
 						enemy->Hide();
-						cout << "Hidden" << endl;
 						SetBig(true);
 					}
 				}
@@ -825,11 +839,11 @@ public:
 			player->Hide();
 		}
 		else if (!isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
-			Hide();
+			this->Hide();
+			cout << "Bouding box x: " << boundingBox.x << " y: " << boundingBox.y << endl;
 		}
 	}
 };
-
 
 class Spawner {
 	float timeToSpawnFire;
@@ -891,11 +905,22 @@ class Game
 			if (allies[i]->GetIsVisible()) {
 				for (Tree* tree : treesInDestruction) {
 					if (allies[i]->IsTreeInRange(tree, 300)) {
-						allies[i]->SetTarget(tree);
+						allies[i]->SetTarget(tree->GetX(), tree->GetY(), tree->getWidth(), tree->getHeight());
+						return;
+					}
+				}
+			}
+
+			for (Enemy* enemy : enemies) {
+				if (enemy != nullptr) {
+					if (enemy->GetIsVisible() && !enemy->GetIsBig() &&
+						allies[i]->IsInRange(enemy->GetX(), enemy->GetY(), 300)) {
+						allies[i]->SetTarget(enemy->GetX(), enemy->GetY(), enemy->getWidth(), enemy->getHeight());
 					}
 				}
 			}
 		}
+		
 	}
 
 	void RenderAllies() {
