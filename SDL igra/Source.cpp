@@ -619,86 +619,6 @@ public:
 	}
 };
 
-class Enemy : public GameObject {
-	int spawnX, spawnY;
-	int targetX, targetY;
-
-	int targetRow, targetColumn;
-
-	Forest* forest;
-
-	void GenerateRandomTarget() {
-		targetX = Util::GetRandomX(width);
-		targetY = Util::GetRandomY(height);
-
-		targetRow = targetY / 64;
-		targetColumn = targetX / 64;
-	}
-
-public:
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
-		this->width = width;
-		this->height = height;
-
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
-
-
-		this->renderer = renderer;
-		spawnX = x = Util::GetRandomX(width);
-		spawnY = y = Util::GetRandomY(height);
-		this->movementSpeed = movementSpeed;
-
-		UpdateSourceRectangle();
-		visible = true;
-
-		GenerateRandomTarget();
-
-		this->forest = forest;
-	}
-
-	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
-		Init(red, green, blue, renderer, movementSpeed, width, height, forest);
-	}
-
-	void Move() {
-		float dx = targetX - x;
-		float dy = targetY - y;
-
-		float magnitude = sqrt(dx * dx + dy * dy);
-
-		if (!forest->CanBeDestroyed(targetRow, targetColumn)) GenerateRandomTarget();
-		else {
-
-			if (magnitude > 0) {
-				dx /= magnitude;
-				dy /= magnitude;
-
-				x += round(dx * movementSpeed);
-				y += round(dy * movementSpeed);
-
-			}
-			else {
-				forest->StartBurning(targetRow, targetColumn);
-				GenerateRandomTarget();
-			}
-		}
-	}
-
-	void Hide() {
-		visible = false;
-		x = spawnX;
-		y = spawnY;
-	}
-
-	void SetTarget(Tree* tree) {
-		targetX = tree->GetX() + tree->getWidth() / 2;
-		targetY = tree->GetY() + tree->getHeight() / 2;
-	}
-};
-
 class Player : public GameObject {
 public:
 	using GameObject::GameObject;
@@ -756,6 +676,150 @@ public:
 		}
 	}
 };
+
+class Enemy : public GameObject {
+	int spawnX, spawnY;
+	int targetX, targetY;
+
+	int targetRow, targetColumn;
+
+	bool isBig;
+
+	Forest* forest;
+
+	void GenerateRandomTarget() {
+		targetX = Util::GetRandomX(width);
+		targetY = Util::GetRandomY(height);
+
+		targetRow = targetY / 64;
+		targetColumn = targetX / 64;
+	}
+
+public:
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+		this->renderer = renderer;
+		spawnX = x = Util::GetRandomX(width);
+		spawnY = y = Util::GetRandomY(height);
+		this->movementSpeed = movementSpeed;
+
+		UpdateSourceRectangle();
+
+		GenerateRandomTarget();
+
+		this->forest = forest;
+		SetBig(false);
+
+		visible = true;
+	}
+
+	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
+		Init(red, green, blue, renderer, movementSpeed, width, height, forest);
+	}
+
+	void Move() {
+		float dx = targetX - x;
+		float dy = targetY - y;
+
+		float magnitude = sqrt(dx * dx + dy * dy);
+
+		if (!forest->CanBeDestroyed(targetRow, targetColumn)) GenerateRandomTarget();
+		else {
+
+			if (magnitude > 0) {
+				dx /= magnitude;
+				dy /= magnitude;
+
+				x += round(dx * movementSpeed);
+				y += round(dy * movementSpeed);
+
+			}
+			else {
+				forest->StartBurning(targetRow, targetColumn);
+				GenerateRandomTarget();
+			}
+		}
+	}
+
+	void Hide() {
+		visible = false;
+		x = spawnX;
+		y = spawnY;
+	}
+
+	void SetTarget(Tree* tree) {
+		targetX = tree->GetX() + tree->getWidth() / 2;
+		targetY = tree->GetY() + tree->getHeight() / 2;
+	}
+
+	void SetBig(bool toSet) {
+		if (isBig == toSet) return;
+
+		isBig = toSet;
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+
+		if (toSet == true) SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 255));
+		else SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 200, 0, 200));
+
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+	}
+
+	void HandleCollision(vector<Ally*> allies, vector<Enemy*> enemies, Player *player) {
+		if (!visible) return;
+
+		SDL_Rect boundingBox = GetBoundingBox();
+		SDL_Rect playerBoundingBox = player->GetBoundingBox();
+
+		for (Ally* ally : allies) {
+			if (visible && ally != nullptr && ally->GetIsVisible()) {
+				SDL_Rect allyBoundingBox = ally->GetBoundingBox();
+
+				if (SDL_HasIntersection(&allyBoundingBox, &boundingBox)) {
+					if (!isBig) Hide();  
+					else if(isBig) {
+						if (SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
+							Hide();
+						}
+						else {
+							ally->Hide();
+						}
+					}
+				}
+			}
+		}
+
+		for (Enemy* enemy : enemies) {
+			if (visible && enemy != nullptr && enemy->GetIsVisible()) {
+				SDL_Rect enemyBoundingBox = enemy->GetBoundingBox();
+				if (enemy != this) {
+					if (SDL_HasIntersection(&enemyBoundingBox, &boundingBox) && isBig == false) {
+						enemy->Hide();
+						cout << "Hidden" << endl;
+						SetBig(true);
+					}
+				}
+			}
+		}
+		if (!player->GetIsVisible()) return;
+
+		if (isBig &&  SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
+			player->Hide();
+		}
+		else if (!isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
+			Hide();
+		}
+	}
+};
+
 
 class Spawner {
 	float timeToSpawnFire;
@@ -970,6 +1034,9 @@ public:
 		UpdateAllies();
 
 		UpdateEnemies();
+		for (int i = 0; i < enemies.size(); i++) {
+			enemies[i]->HandleCollision(allies, enemies, player);
+		}
 
 		spawner->Update();
 
