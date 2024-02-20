@@ -619,6 +619,86 @@ public:
 	}
 };
 
+class Enemy : public GameObject {
+	int spawnX, spawnY;
+	int targetX, targetY;
+
+	int targetRow, targetColumn;
+
+	Forest* forest;
+
+	void GenerateRandomTarget() {
+		targetX = Util::GetRandomX(width);
+		targetY = Util::GetRandomY(height);
+
+		targetRow = targetY / 64;
+		targetColumn = targetX / 64;
+	}
+
+public:
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+
+		this->renderer = renderer;
+		spawnX = x = Util::GetRandomX(width);
+		spawnY = y = Util::GetRandomY(height);
+		this->movementSpeed = movementSpeed;
+
+		UpdateSourceRectangle();
+		visible = true;
+
+		GenerateRandomTarget();
+
+		this->forest = forest;
+	}
+
+	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
+		Init(red, green, blue, renderer, movementSpeed, width, height, forest);
+	}
+
+	void Move() {
+		float dx = targetX - x;
+		float dy = targetY - y;
+
+		float magnitude = sqrt(dx * dx + dy * dy);
+
+		if (!forest->CanBeDestroyed(targetRow, targetColumn)) GenerateRandomTarget();
+		else {
+
+			if (magnitude > 0) {
+				dx /= magnitude;
+				dy /= magnitude;
+
+				x += round(dx * movementSpeed);
+				y += round(dy * movementSpeed);
+
+			}
+			else {
+				forest->StartBurning(targetRow, targetColumn);
+				GenerateRandomTarget();
+			}
+		}
+	}
+
+	void Hide() {
+		visible = false;
+		x = spawnX;
+		y = spawnY;
+	}
+
+	void SetTarget(Tree* tree) {
+		targetX = tree->GetX() + tree->getWidth() / 2;
+		targetY = tree->GetY() + tree->getHeight() / 2;
+	}
+};
+
 class Player : public GameObject {
 public:
 	using GameObject::GameObject;
@@ -710,6 +790,7 @@ vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
 Forest* forest;
 Spawner* spawner;
+vector<Enemy*> enemies(3);
 
 class Game
 {
@@ -720,6 +801,26 @@ class Game
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Hide();
+		}
+	}
+
+	void UpdateSpawnSquares() {
+		if (playerSpawnSquares[0]->GetIsVisible()) {
+			for (int i = 0; i < playerSpawnSquares.size(); i++) {
+				playerSpawnSquares[i]->Update();
+			}
+		}
+	}
+
+	void CheckAllyBehavior(vector<Tree *> treesInDestruction) {
+		for (int i = 0; i < allies.size(); i++) {
+			if (allies[i]->GetIsVisible()) {
+				for (Tree* tree : treesInDestruction) {
+					if (allies[i]->IsTreeInRange(tree, 300)) {
+						allies[i]->SetTarget(tree);
+					}
+				}
+			}
 		}
 	}
 
@@ -739,32 +840,30 @@ class Game
 			}
 		}
 	}	
-
-	void UpdateSpawnSquares() {
-		if (playerSpawnSquares[0]->GetIsVisible()) {
-			for (int i = 0; i < playerSpawnSquares.size(); i++) {
-				playerSpawnSquares[i]->Update();
-			}
-		}
-	}
 			
-	void CheckAllyBehavior(vector<Tree *> treesInDestruction) {
-		for (int i = 0; i < allies.size(); i++) {
-			if (allies[i]->GetIsVisible()) {
-				for (Tree* tree : treesInDestruction) {
-					if (allies[i]->IsTreeInRange(tree, 300)) {
-						allies[i]->SetTarget(tree);
-					}
-				}
-			}
-		}
-	}
-
 	void HandleAlliesCollision(vector<Tree*> treesInDestruction) {
 		for (int ally = 0; ally < 3; ally++) {
 			allies[ally]->HandleTreeCollision(treesInDestruction);
 		}
 	}
+
+	void RenderEnemies() {
+		if (enemies[0]->GetIsVisible()) {
+			for (int i = 0; i < enemies.size(); i++) {
+				enemies[i]->Render();
+			}
+		}
+	}
+
+	void UpdateEnemies() {
+		if (enemies[0]->GetIsVisible()) {
+			for (int i = 0; i < enemies.size(); i++) {
+				enemies[i]->Update();
+				//allies[i]->HandleTreeCollision(trees[0]);		
+			}
+		}
+	}
+
 
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
@@ -803,6 +902,11 @@ public:
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
 		forest = new Forest(gameRenderer, 2);
+
+		enemies[0] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
+		enemies[1] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
+		enemies[2] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
+		
 
 		spawner = new Spawner(1, forest);
 
@@ -865,7 +969,10 @@ public:
 		HandleAlliesCollision(forest->GetBurningTrees());
 		UpdateAllies();
 
+		UpdateEnemies();
+
 		spawner->Update();
+
 
 		UpdateSpawnSquares();
 	};
@@ -875,8 +982,9 @@ public:
 
 		forest->Render();   
 
-		RenderAllies();
+		RenderEnemies();
 
+		RenderAllies();
 
 		player->Render();
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
@@ -915,6 +1023,10 @@ int main(int argc, char* argv[]) {
 		player->HandleInput();
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Move();
+		}
+
+		for (int i = 0; i < enemies.size(); i++) {
+			enemies[i]->Move();
 		}
 
 		game->HandleEvents();
