@@ -778,18 +778,26 @@ public:
 
 		SDL_Rect boundingBox = GetBoundingBox();
 		SDL_Rect playerBoundingBox = player->GetBoundingBox();
+		bool playerIsCloseToAlly = false;
+		bool invinciblePlayer = false;
 
 		for (Ally* ally : allies) {
 			if (visible && ally != nullptr && ally->GetIsVisible()) {
 				SDL_Rect allyBoundingBox = ally->GetBoundingBox();
 
+				if ((abs(playerBoundingBox.x - allyBoundingBox.x) < 100 && abs(playerBoundingBox.y - allyBoundingBox.y) < 100) && !playerIsCloseToAlly) { 
+					playerIsCloseToAlly = true; 
+					invinciblePlayer = true;
+				}
+
 				if (SDL_HasIntersection(&allyBoundingBox, &boundingBox)) {
+
 					if (!isBig) Hide();  
 					else if(isBig) {
 						if (SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
 							Hide();
 						}
-						else {
+						else if(!playerIsCloseToAlly) {
 							ally->Hide();
 						}
 					}
@@ -809,7 +817,9 @@ public:
 				}
 			}
 		}
-		if (!player->GetIsVisible()) return;
+
+
+		if (!player->GetIsVisible() || invinciblePlayer) return;
 
 		if (isBig &&  SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
 			player->Hide();
