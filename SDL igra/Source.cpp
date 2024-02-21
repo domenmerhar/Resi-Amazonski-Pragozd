@@ -217,8 +217,11 @@ public:
 class Tree{
 	int x, y, width, height;
 
+	int spreadX, spreadY;
+
 	int framesToDestruction;
 	float timeToBurn;
+	bool canSpread;
 
 	float timeToExcavate;
 
@@ -249,6 +252,52 @@ class Tree{
 	void Burn() {
 		framesToDestruction--;
 
+		if (framesToDestruction <= 100 && canSpread) {
+			canSpread = false;
+			if (true) {
+				int combination = rand() % 9;
+
+				switch (combination) {
+				case 0:
+					spreadX = x + 64;
+					spreadY = y + 64;
+					break;
+				case 1:
+					spreadX = x + 64;
+					spreadY = y + 0;
+					break;
+				case 2:
+					spreadX = x + 64;
+					spreadY = y - 64;
+					break;
+				case 3:
+					spreadX = x + 0;
+					spreadY = y + 64;
+					break;
+				case 4:
+					spreadX = -1;
+					spreadY = -1;
+					break;
+				case 5:
+					spreadX = x + 0;
+					spreadY = y - 64;
+					break;
+				case 6:
+					spreadX = x - 64;
+					spreadY = y + 64;
+					break;
+				case 7:
+					spreadX = x - 64;
+					spreadY = y + 0;
+					break;
+				case 8:
+					spreadX = x - 64;
+					spreadY = y - 64;
+					break;
+				}
+			}
+		}
+
 		if (framesToDestruction <= 0) {
 			inDestruction = false;
 			//SetColor(88, 57, 39);
@@ -257,7 +306,7 @@ class Tree{
 			SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 88, 57, 39));
 			texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 			SDL_FreeSurface(tempSurface);
-			
+
 			isDestroyed = true;
 		}
 	}
@@ -314,6 +363,9 @@ public:
 		isDestroyed = false;
 		inDestruction = canBeDestroyed = false;
 
+		spreadX = -1;
+		spreadY = -1;
+		canSpread = true;
 	}
 
 	Tree() {
@@ -330,6 +382,14 @@ public:
 
 	int GetY() {
 		return y;
+	}
+	
+	int GetSpreadX() {
+		return spreadX;
+	}
+
+	int GetSpreadY() {
+		return spreadY;
 	}
 
 	void SetPosition(int x, int y) {
@@ -373,6 +433,10 @@ public:
 		ResetFramesToBurn();
 
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		if (tempSurface == NULL) {
+			SDL_Log("SDL_CreateRGBSurface failed: %s", SDL_GetError());
+			return;
+		}
 		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 0));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -537,6 +601,16 @@ class Forest{
 
 		while (it != treesInDestruction.end()) {
 			if ((*it)->GetIsDestroyed()) {
+				int column = (*it)->GetSpreadX() / 64;
+				int row = (*it)->GetSpreadY() / 64;
+
+				cout << "SpreadX: " << column << " SpreadY: " << row << endl;
+
+				if (column >= 0 && row >= 0  && column <= columns * tileSize && row <= rows * tileSize && CanBeDestroyed(row, column)) {
+					trees[row][column]->StartBurning();
+					cout << "Spread\n";
+				}
+
 				it = treesInDestruction.erase(it);
 				destroyedTrees++;
 				CalculateDestroyedTreesPercentage();
@@ -1143,9 +1217,7 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
-
-//Burning trees
-//Pass to Player and Allies collision detection
-//Loop over all trees and check for collision
-//If collision, extinguish tree, break loop
-//Delete from array / vector / list / whatever
+//Fire Expansion
+//50% chance to spawn fire
+//increment x and y by 64
+//call start burning
