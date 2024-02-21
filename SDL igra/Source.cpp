@@ -16,6 +16,17 @@ struct Color {
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 200, 200, 200 };
 
+struct Level {
+	float timeToBurn,
+		  timeToSpawnDestruction,
+		  timeToSpawnEnemy;
+	
+	int time,
+		playerSpeed,
+		allySpeed,
+		enemySpeed;
+};
+
 class FrameManager {
 	Uint32 frameStart = NULL;
 	int FPS;
@@ -161,10 +172,15 @@ public:
 		this->renderer = renderer;
 		this->x = x;
 		this->y = y;
+
+		Reset(movementSpeed, visible);
+	}
+
+	void Reset(int movementSpeed, bool isVisible) {
 		this->movementSpeed = movementSpeed;
+		visible = isVisible;
 
 		UpdateSourceRectangle();
-		this->visible = visible;
 	}
 
 	GameObject() {
@@ -368,6 +384,23 @@ public:
 		canSpread = true;
 	}
 
+	void Reset(float timeToBurn, int red, int green, int blue) {
+		tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+		this->timeToBurn = timeToBurn;
+		timeToExcavate = timeToBurn * 2;
+
+		isDestroyed = false;
+		inDestruction = canBeDestroyed = false;
+
+		spreadX = -1;
+		spreadY = -1;
+		canSpread = true;
+	}
+
 	Tree() {
 		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, 60);
 	}
@@ -476,6 +509,11 @@ public:
 
 
 		this->renderer = renderer;
+
+		Reset(movementSpeed);
+	}
+
+	void Reset(int movementSpeed) {
 		spawnX = x = Util::GetRandomX(width);
 		spawnY = y = Util::GetRandomY(height);
 		this->movementSpeed = movementSpeed;
@@ -695,6 +733,18 @@ public:
 	vector<Tree*> GetBurningTrees() const {
 		return treesInDestruction;
 	}
+
+	void Reset(float timeToBurn) {
+		for (int row = 0; row < rows; row++) {
+			for (int column = 0; column < columns; column++) {
+				trees[row][column]->Reset(timeToBurn, forestGreen.red, forestGreen.green, forestGreen.blue);
+			}
+		}
+	}
+
+	float GetDestroyedTreesPercentage() {
+		return destroyedTreesPercentage;
+	}
 };
 
 class Player : public GameObject {
@@ -786,6 +836,13 @@ public:
 		SDL_FreeSurface(tempSurface);
 
 		this->renderer = renderer;
+		
+		this->forest = forest;
+
+		Reset(movementSpeed);
+	}
+
+	void Reset(int movementSpeed) {
 		spawnX = x = Util::GetRandomX(width);
 		spawnY = y = Util::GetRandomY(height);
 		this->movementSpeed = movementSpeed;
@@ -793,10 +850,8 @@ public:
 		UpdateSourceRectangle();
 
 		GenerateRandomTarget();
-
-		this->forest = forest;
+		
 		SetBig(false);
-
 		visible = true;
 
 		boundingBox = GetBoundingBox();
@@ -932,6 +987,13 @@ class Spawner {
 	vector<Enemy*> enemies;
 public:
 	Spawner(float timeToSpawnFire, float timeToRespawnEnemy, Forest *forest, vector<Enemy*> enemies) {
+		Reset(timeToSpawnFire, timeToRespawnEnemy);
+
+		this->forest = forest;
+		this->enemies = enemies;
+	}
+
+	void Reset(float timeToSpawnFire, float timeToRespawnEnemy) {
 		this->timeToSpawnFire = timeToSpawnFire;
 		framesToSpawnFire = timeToSpawnFire * 60;
 		clockToSpawnFire = 0;
@@ -939,9 +1001,6 @@ public:
 		this->timeToRespawnEnemy = timeToRespawnEnemy;
 		framesToRespawnEnemy = timeToRespawnEnemy * 60;
 		clockToRespawnEnemy = 0;
-
-		this->forest = forest;
-		this->enemies = enemies;
 	}
 
 	void Update() {
@@ -974,14 +1033,28 @@ class Clock {
 	int framesRemaining;
 	int FPS;
 
+	bool canCount;
+
 public:
 	Clock(int seconds, int FPS) {
 		this->FPS = FPS;
 		Reset(seconds);
 	}
 
+	void Reset(int seconds) {
+		framesToCountdown = seconds * FPS;
+		framesRemaining = framesToCountdown;
+		canCount = false;
+	}
+
 	void Update() {
-		framesRemaining--;
+		if (canCount) {
+			framesRemaining--;
+
+			if (framesRemaining < 0) {
+				StopCounting();
+			}
+		}
 	}
 
 	bool IsTimeUp() {
@@ -992,9 +1065,12 @@ public:
 		return framesRemaining / FPS;
 	}
 
-	void Reset(int seconds) {
-		framesToCountdown = seconds * FPS;
-		framesRemaining = framesToCountdown;
+	void StartCounting() {
+		canCount = true;
+	}
+
+	void StopCounting() {
+		canCount = false;
 	}
 };
 
@@ -1011,10 +1087,21 @@ class Game
 	bool isRunning = false;
 	SDL_Window* window = NULL;
 	SDL_Renderer* gameRenderer = NULL;
+	Level levels[2];
+
+	bool isPlaying = false;
 
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Hide();
+		}
+
+		gameClock->StartCounting();
+	}
+
+	void ShowSpawnSquares() {
+		for (int i = 0; i < playerSpawnSquares.size(); i++) {
+			playerSpawnSquares[i]->Show();
 		}
 	}
 
@@ -1084,11 +1171,40 @@ class Game
 		if (enemies[0]->GetIsVisible()) {
 			for (int i = 0; i < enemies.size(); i++) {
 				enemies[i]->Update();
-				//allies[i]->HandleTreeCollision(trees[0]);		
+				enemies[i]->HandleCollision(allies, enemies, player);
 			}
 		}
 	}
 
+	void ResetGame(Level levelToSet) {
+		gameClock->Reset(levelToSet.time);
+		forest->Reset(levelToSet.timeToBurn);
+		spawner->Reset(levelToSet.timeToSpawnDestruction, levelToSet.timeToSpawnEnemy);
+		player->Reset(levelToSet.playerSpeed, false);
+
+		for (int i = 0; i < allies.size(); i++) {
+			allies[i]->Reset(levelToSet.allySpeed);
+		}
+
+		for (int i = 0; i < enemies.size(); i++) {
+			enemies[i]->Reset(levelToSet.enemySpeed);
+		}
+
+		ShowSpawnSquares();
+	}
+
+	void HandleLevels() {
+		if (gameClock->GetTimeRemaining() <= 0) {
+			if (forest->GetDestroyedTreesPercentage() >= 70) {
+				gameClock->StopCounting();
+				cout << "Game over!" << endl;
+				ResetGame(levels[0]);
+			}
+			else {
+				ResetGame(levels[1]);
+			}
+		}
+	}
 
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
@@ -1140,6 +1256,10 @@ public:
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
 		}
+
+		levels[0] = { 1, 5, 15, 60, 5, 1, 1 };
+		levels[1] = { 2, 5, 15, 60, 5, 1, 1 };
+		
 	}
 
 	void HandleEvents() {
@@ -1197,15 +1317,13 @@ public:
 		UpdateAllies();
 
 		UpdateEnemies();
-		for (int i = 0; i < enemies.size(); i++) {
-			enemies[i]->HandleCollision(allies, enemies, player);
-		}
 
 		spawner->Update();
-
 		gameClock->Update();
-
+		
+		HandleLevels();
 		cout << gameClock->GetTimeRemaining() << endl;
+		
 
 		UpdateSpawnSquares();
 	};
@@ -1273,3 +1391,10 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
+
+//Time runs out
+//Reset
+//If 70% of trees are destroyed, level 1
+//Else level 2
+//Assets
+//Show Squares
