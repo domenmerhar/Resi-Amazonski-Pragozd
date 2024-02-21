@@ -33,11 +33,6 @@ class FrameManager {
 	int frameDelay;
 
 public:
-	FrameManager() {
-		FPS = 60;
-		frameDelay = 1000 / FPS;
-	};
-
 	FrameManager(int FPS) {
 		this->FPS = FPS;
 		frameDelay = 1000 / FPS;
@@ -54,16 +49,13 @@ public:
 			SDL_Delay(frameDelay - frameTime);
 		}
 	}
-
-	int getFPS() {
-		return FPS;
-	}
 };
 
 class Util {
 public:
 	static const int windowWidth = 832;
 	static const int windowHeight= 640;
+	static const int FPS = 60;
 
 	static bool WithinBoundsX(int x,  int width) {
 		return x >= 0 && x <= windowWidth - width * 2;
@@ -98,25 +90,6 @@ public:
 	static int GetRandomY(int height) {
 		return rand() % (windowHeight - height * 2);
 	}
-
-	bool CheckCollision(SDL_Rect rect1, SDL_Rect rect2) {
-		int left1 = rect1.x;
-		int right1 = rect1.x + rect1.w;
-		int top1 = rect1.y;
-		int bottom1 = rect1.y + rect1.h;
-
-		int left2 = rect2.x;
-		int right2 = rect2.x + rect2.w;
-		int top2 = rect2.y;
-		int bottom2 = rect2.y + rect2.h;
-
-		if (bottom1 <= top2 || top1 >= bottom2 || right1 <= left2 || left1 >= right2) {
-			return false;
-		}
-		else {
-			return true;
-		}
-	}
 };
 
 class GameObject {
@@ -147,17 +120,6 @@ protected:
 		destinationRectangle.w = sourceRectangle.w * 2;
 		destinationRectangle.h = sourceRectangle.h * 2;
 	}
-public:
-	void Update() {
-		if (visible) {
-			UpdateSourceRectangle();
-			UpdateDestinationRectangle();
-		}
-	}
-
-	void Render() {
-        if(visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
-	}
 
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
 		this->width = width;
@@ -174,6 +136,18 @@ public:
 		this->y = y;
 
 		Reset(movementSpeed, visible);
+	}
+
+public:
+	void Update() {
+		if (visible) {
+			UpdateSourceRectangle();
+			UpdateDestinationRectangle();
+		}
+	}
+
+	void Render() {
+        if(visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
 	}
 
 	void Reset(int movementSpeed, bool isVisible) {
@@ -335,11 +309,11 @@ class Tree{
 	}
 
 	void ResetFramesToBurn() {
-		framesToDestruction = timeToBurn * 60;
+		framesToDestruction = timeToBurn * Util::FPS;
 	}
 
 	void ResetFramesToExcavate() {
-		framesToDestruction = timeToExcavate * 60;
+		framesToDestruction = timeToExcavate * Util::FPS;
 	}
 	
 public:
@@ -402,7 +376,7 @@ public:
 	}
 
 	Tree() {
-		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, 60);
+		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, Util::FPS);
 	}
 
 	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, float timeToBurn, int FPS) {
@@ -491,13 +465,11 @@ class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
 
-
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
 		targetY = Util::GetRandomY(height);
 	}
 
-public:
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
 		this->width = width;
 		this->height = height;
@@ -513,6 +485,7 @@ public:
 		Reset(movementSpeed);
 	}
 
+public:
 	void Reset(int movementSpeed) {
 		spawnX = x = Util::GetRandomX(width);
 		spawnY = y = Util::GetRandomY(height);
@@ -533,7 +506,6 @@ public:
 		float dy = targetY - y;
 
 		float magnitude = sqrt(dx * dx + dy * dy);
-
 
 		if (magnitude > 0) {
 			dx /= magnitude;
@@ -561,7 +533,7 @@ public:
 	}
 
 	bool IsTreeInRange(Tree* tree, int range) {
-		if (!tree->GetIsInDestruction())return false;
+		if (!tree->GetIsInDestruction()) return false;
 
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
@@ -613,7 +585,7 @@ class Forest{
 			for (int column = 0; column < columns; column++) {
 				trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
 					renderer, column * tileSize, row * tileSize,
-					tileSize, tileSize, timeToBurn, 60);
+					tileSize, tileSize, timeToBurn, Util::FPS);
 			}
 		}
 	}
@@ -995,11 +967,11 @@ public:
 
 	void Reset(float timeToSpawnFire, float timeToRespawnEnemy) {
 		this->timeToSpawnFire = timeToSpawnFire;
-		framesToSpawnFire = timeToSpawnFire * 60;
+		framesToSpawnFire = timeToSpawnFire * Util::FPS;
 		clockToSpawnFire = 0;
 
 		this->timeToRespawnEnemy = timeToRespawnEnemy;
-		framesToRespawnEnemy = timeToRespawnEnemy * 60;
+		framesToRespawnEnemy = timeToRespawnEnemy * Util::FPS;
 		clockToRespawnEnemy = 0;
 	}
 
@@ -1113,7 +1085,8 @@ class Game
 		}
 	}
 
-	void CheckAllyBehavior(vector<Tree *> treesInDestruction) {
+	/*
+	void HandleAlliesMovement(vector<Tree *> treesInDestruction) {
 		for (int i = 0; i < allies.size(); i++) {
 			if (allies[i]->GetIsVisible()) {
 				for (Tree* tree : treesInDestruction) {
@@ -1135,29 +1108,65 @@ class Game
 		}
 		
 	}
+*/
 
-	void RenderAllies() {
-		if (allies[0]->GetIsVisible()) {
-			for (int i = 0; i < allies.size(); i++) {
-				allies[i]->Render();
+	void HandleAllyMovement(vector<Tree*> treesInDestruction, Ally* ally) {
+		if (ally->GetIsVisible()) {
+			for (Tree* tree : treesInDestruction) {
+				if (ally->IsTreeInRange(tree, 300)) {
+					ally->SetTarget(tree->GetX(), tree->GetY(), tree->getWidth(), tree->getHeight());
+					return;
+				}
+			}
+		}
+
+		for (Enemy* enemy : enemies) {
+			if (enemy != nullptr) {
+				if (enemy->GetIsVisible() && !enemy->GetIsBig() &&
+					ally->IsInRange(enemy->GetX(), enemy->GetY(), 300)) {
+					ally->SetTarget(enemy->GetX(), enemy->GetY(), enemy->getWidth(), enemy->getHeight());
+				}
 			}
 		}
 	}
 
-	void UpdateAllies() {
+	void RenderAlly(Ally* ally) {
+		if (ally->GetIsVisible()) {
+			ally->Render();
+		}
+	}
+	
+	void RenderAllies() {
+		if (allies[0]->GetIsVisible()) {
+			for (int i = 0; i < allies.size(); i++) {
+				RenderAlly(allies[i]);
+			}
+		}
+	}
+
+	void HandleAllyCollision(vector<Tree*> treesInDestruction, Ally* ally) {
+		ally->HandleTreeCollision(treesInDestruction);
+	}
+
+	void HandleAllies(vector<Tree*> treesInDestruction) {
 		if (allies[0]->GetIsVisible()) {
 			for (int i = 0; i < allies.size(); i++) {
 				allies[i]->Update();
-				//allies[i]->HandleTreeCollision(trees[0]);		
+
+				HandleAllyCollision(treesInDestruction, allies[i]);
+				HandleAllyMovement(treesInDestruction, allies[i]);
+				allies[i]->Move();
 			}
 		}
 	}	
-			
+	
+	/*
 	void HandleAlliesCollision(vector<Tree*> treesInDestruction) {
 		for (int ally = 0; ally < 3; ally++) {
 			allies[ally]->HandleTreeCollision(treesInDestruction);
 		}
 	}
+*/
 
 	void RenderEnemies() {
 		if (enemies[0]->GetIsVisible()) {
@@ -1167,11 +1176,12 @@ class Game
 		}
 	}
 
-	void UpdateEnemies() {
-		if (enemies[0]->GetIsVisible()) {
-			for (int i = 0; i < enemies.size(); i++) {
+	void HandleEnemies(){
+		for (int i = 0; i < enemies.size(); i++) {
+			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
 				enemies[i]->HandleCollision(allies, enemies, player);
+				enemies[i]->Move();
 			}
 		}
 	}
@@ -1202,6 +1212,36 @@ class Game
 			}
 			else {
 				ResetGame(levels[1]);
+			}
+		}
+	}
+
+	void HandleEventsSpawnSquares(int x, int y) {
+		if (playerSpawnSquares[0]->GetIsVisible()) {
+			for (int i = 0; i < playerSpawnSquares.size(); i++) {
+				if (
+					playerSpawnSquares[i]->GetX() - 100 <= x && x <= playerSpawnSquares[i]->GetX() + 100 &&
+					playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
+					) {
+					if (i == 4) {
+						int x = Util::GetRandomX(player->getWidth());
+						int y = Util::GetRandomY(player->getHeight());
+
+						player->SetPosition(x, y);
+					}
+					else
+					{
+						player->SetPosition(
+							playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
+							playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
+						);
+
+					}
+
+					player->Show();
+					HideSpawnSquares();
+					break;
+				}
 			}
 		}
 	}
@@ -1251,7 +1291,7 @@ public:
 
 		spawner = new Spawner(1, 15, forest, enemies);
 
-		gameClock = new Clock(10, 60);
+		gameClock = new Clock(10, Util::FPS);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -1271,52 +1311,21 @@ public:
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					if (playerSpawnSquares[0]->GetIsVisible()) {
-						int x = event.button.x;
-						int y = event.button.y;
-
-						for (int i = 0; i < playerSpawnSquares.size(); i++) {
-							if (
-								playerSpawnSquares[i]->GetX() - 100 <= x && x <= playerSpawnSquares[i]->GetX() + 100 &&
-								playerSpawnSquares[i]->GetY() - 100 <= y && y <= playerSpawnSquares[i]->GetY() + 100
-								) {
-								if (i == 4) {
-									int x = Util::GetRandomX(player->getWidth());
-									int y = Util::GetRandomY(player->getHeight());
-
-									player->SetPosition(x, y);
-								}
-								else
-								{
-									player->SetPosition(
-										playerSpawnSquares[i]->GetX() + playerSpawnSquares[i]->getHeight() / 2,
-										playerSpawnSquares[i]->GetY() + playerSpawnSquares[i]->getHeight() / 2
-									);
-
-								}
-								player->Show();
-								HideSpawnSquares();
-								break;
-							}
-						}
-					}
+					HandleEventsSpawnSquares(event.button.x, event.button.y);
 				}
 			}
 		}
 	};
 
 	void Update() {
-
 		player->Update();
 		player->HandleTreeCollision(forest->GetBurningTrees());
 
 		forest->Update();
 		
-		CheckAllyBehavior(forest->GetBurningTrees());
-		HandleAlliesCollision(forest->GetBurningTrees());
-		UpdateAllies();
+		HandleAllies(forest->GetBurningTrees());
 
-		UpdateEnemies();
+		HandleEnemies();
 
 		spawner->Update();
 		gameClock->Update();
@@ -1324,7 +1333,6 @@ public:
 		HandleLevels();
 		cout << gameClock->GetTimeRemaining() << endl;
 		
-
 		UpdateSpawnSquares();
 	};
 
@@ -1362,7 +1370,7 @@ int main(int argc, char* argv[]) {
 
 	bool isFullscreen = false;
 
-	FrameManager frameManager;
+	FrameManager frameManager(Util::FPS);
 
 	Game *game = new Game();
 	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
@@ -1372,13 +1380,6 @@ int main(int argc, char* argv[]) {
 		frameManager.StartFrame();
 
 		player->HandleInput();
-		for (int i = 0; i < allies.size(); i++) {
-			allies[i]->Move();
-		}
-
-		for (int i = 0; i < enemies.size(); i++) {
-			enemies[i]->Move();
-		}
 
 		game->HandleEvents();
 		game->Update();
