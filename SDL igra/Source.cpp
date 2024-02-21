@@ -924,15 +924,24 @@ class Spawner {
 	int framesToSpawnFire;
 	int clockToSpawnFire;
 
-	Forest * forest;
+	float timeToRespawnEnemy;
+	int framesToRespawnEnemy;
+	int clockToRespawnEnemy;
 
+	Forest * forest;
+	vector<Enemy*> enemies;
 public:
-	Spawner(float timeToSpawnFire, Forest *forest) {
+	Spawner(float timeToSpawnFire, float timeToRespawnEnemy, Forest *forest, vector<Enemy*> enemies) {
 		this->timeToSpawnFire = timeToSpawnFire;
 		framesToSpawnFire = timeToSpawnFire * 60;
 		clockToSpawnFire = 0;
 
+		this->timeToRespawnEnemy = timeToRespawnEnemy;
+		framesToRespawnEnemy = timeToRespawnEnemy * 60;
+		clockToRespawnEnemy = 0;
+
 		this->forest = forest;
+		this->enemies = enemies;
 	}
 
 	void Update() {
@@ -943,6 +952,19 @@ public:
 			bool burnTree = rand() % 2;
 
 			forest->RandomStartDestroying(burnTree);
+		}
+
+		clockToRespawnEnemy++;
+
+		if (clockToRespawnEnemy >= framesToRespawnEnemy) {
+			clockToRespawnEnemy = 0;
+
+			for (Enemy* enemy : enemies) {
+				if (!enemy->GetIsVisible()) {
+					enemy->Show();
+					break;
+				}
+			}
 		}
 	}
 };
@@ -1081,7 +1103,7 @@ public:
 		enemies[2] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
 		
 
-		spawner = new Spawner(1, forest);
+		spawner = new Spawner(1, 15, forest, enemies);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
