@@ -823,7 +823,7 @@ public:
 
 		GenerateRandomTarget();
 		
-		SetBig(false);
+		SetBig(true);
 		visible = true;
 
 		boundingBox = GetBoundingBox();
@@ -1006,6 +1006,7 @@ class Clock {
 	int FPS;
 
 	bool canCount;
+	bool isCounting;
 
 public:
 	Clock(int seconds, int FPS) {
@@ -1017,6 +1018,7 @@ public:
 		framesToCountdown = seconds * FPS;
 		framesRemaining = framesToCountdown;
 		canCount = false;
+		isCounting = false;
 	}
 
 	void Update() {
@@ -1039,10 +1041,15 @@ public:
 
 	void StartCounting() {
 		canCount = true;
+		isCounting = true;
 	}
 
 	void StopCounting() {
 		canCount = false;
+	}
+
+	bool GetIsCounting() {
+		return isCounting;
 	}
 };
 
@@ -1084,31 +1091,6 @@ class Game
 			}
 		}
 	}
-
-	/*
-	void HandleAlliesMovement(vector<Tree *> treesInDestruction) {
-		for (int i = 0; i < allies.size(); i++) {
-			if (allies[i]->GetIsVisible()) {
-				for (Tree* tree : treesInDestruction) {
-					if (allies[i]->IsTreeInRange(tree, 300)) {
-						allies[i]->SetTarget(tree->GetX(), tree->GetY(), tree->getWidth(), tree->getHeight());
-						return;
-					}
-				}
-			}
-
-			for (Enemy* enemy : enemies) {
-				if (enemy != nullptr) {
-					if (enemy->GetIsVisible() && !enemy->GetIsBig() &&
-						allies[i]->IsInRange(enemy->GetX(), enemy->GetY(), 300)) {
-						allies[i]->SetTarget(enemy->GetX(), enemy->GetY(), enemy->getWidth(), enemy->getHeight());
-					}
-				}
-			}
-		}
-		
-	}
-*/
 
 	void HandleAllyMovement(vector<Tree*> treesInDestruction, Ally* ally) {
 		if (ally->GetIsVisible()) {
@@ -1160,14 +1142,6 @@ class Game
 		}
 	}	
 	
-	/*
-	void HandleAlliesCollision(vector<Tree*> treesInDestruction) {
-		for (int ally = 0; ally < 3; ally++) {
-			allies[ally]->HandleTreeCollision(treesInDestruction);
-		}
-	}
-*/
-
 	void RenderEnemies() {
 		if (enemies[0]->GetIsVisible()) {
 			for (int i = 0; i < enemies.size(); i++) {
@@ -1204,6 +1178,10 @@ class Game
 	}
 
 	void HandleLevels() {
+		if (!player->GetIsVisible() && gameClock->GetIsCounting()) {
+			ResetGame(levels[0]);
+		}
+
 		if (gameClock->GetTimeRemaining() <= 0) {
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
 				gameClock->StopCounting();
@@ -1392,10 +1370,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-
-//Time runs out
-//Reset
-//If 70% of trees are destroyed, level 1
-//Else level 2
-//Assets
-//Show Squares
