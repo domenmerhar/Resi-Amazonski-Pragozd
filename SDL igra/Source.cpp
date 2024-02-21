@@ -14,7 +14,11 @@ struct Color {
 };
 
 Color forestGreen{ 55, 178, 77 };
-Color gray{ 200, 200, 200 };
+Color gray{ 134, 142, 150 };
+Color orange{ 255, 107, 107};
+
+Color red{ 201, 42, 42 };
+Color pink{ 166, 30, 77 };
 
 struct Level {
 	float timeToBurn,
@@ -224,6 +228,8 @@ class Tree{
 	SDL_Renderer* renderer;
 	SDL_Surface* tempSurface;
 
+	Color treeColor, fireColor, excavationColor;
+
 	void UpdateSourceRectangle() {
 		sourceRectangle.h = height;
 		sourceRectangle.w = width;
@@ -328,12 +334,17 @@ public:
 		SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
 	}
 
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, float timeToBurn, int FPS) {
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int width, int height, float timeToBurn, int FPS,
+		Color treeColor, Color fireColor, Color excavationColor) {
 		this->width = width;
 		this->height = height;
 
+		this->treeColor = treeColor;
+		this->fireColor = fireColor;
+		this->excavationColor = excavationColor;
+
 		tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, treeColor.red, treeColor.green, treeColor.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -360,7 +371,7 @@ public:
 
 	void Reset(float timeToBurn, int red, int green, int blue) {
 		tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, treeColor.red, treeColor.green, treeColor.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -376,11 +387,12 @@ public:
 	}
 
 	Tree() {
-		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, Util::FPS);
+		Init(255, 255, 255, NULL, 0, 0, 32, 32,  5, Util::FPS, forestGreen, orange, gray);
 	}
 
-	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, float timeToBurn, int FPS) {
-		Init(red, green, blue, renderer, x, y, width, height, timeToBurn, FPS);
+	Tree(int red, int green, int blue, SDL_Renderer* renderer, int x, int y,  int width, int height, float timeToBurn, int FPS,
+		Color treeColor, Color fireColor, Color excavationColor) {
+		Init(red, green, blue, renderer, x, y, width, height, timeToBurn, FPS, treeColor, fireColor, excavationColor);
 	}
 
 	int GetX() {
@@ -444,7 +456,7 @@ public:
 			SDL_Log("SDL_CreateRGBSurface failed: %s", SDL_GetError());
 			return;
 		}
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 0));
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, fireColor.red, fireColor.green, fireColor.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 	}
@@ -455,7 +467,7 @@ public:
 		ResetFramesToExcavate();
 
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, gray.red, gray.green, gray.blue));
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, excavationColor.red, excavationColor.green, excavationColor.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 	}
@@ -580,12 +592,13 @@ class Forest{
 	vector<Tree*> treesInDestruction;
 
 
-	void FillTrees(SDL_Renderer* renderer, float timeToBurn) {
+	void FillTrees(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
 				trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
 					renderer, column * tileSize, row * tileSize,
-					tileSize, tileSize, timeToBurn, Util::FPS);
+					tileSize, tileSize, timeToBurn, Util::FPS,
+					treeColor, fireColor, excavationColor);
 			}
 		}
 	}
@@ -639,8 +652,8 @@ class Forest{
 		if(destroyedTreesPercentage >= 70) cout << "Game over!" << endl;
 	}
 public:
-	Forest(SDL_Renderer* renderer, float timeToBurn) {
-		FillTrees(renderer, timeToBurn);
+	Forest(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
+		FillTrees(renderer, timeToBurn, treeColor, fireColor, excavationColor);
 	}
 
 	void Render() {
@@ -789,6 +802,8 @@ class Enemy : public GameObject {
 
 	SDL_Rect boundingBox;
 
+	Color colorSmall, colorBig;
+
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
 		targetY = Util::GetRandomY(height);
@@ -798,12 +813,15 @@ class Enemy : public GameObject {
 	}
 
 public:
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, Color colorSmall, Color colorBig) {
 		this->width = width;
 		this->height = height;
 
+		this->colorSmall = colorSmall;
+		this->colorBig = colorBig;
+
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
+		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorSmall.red, colorSmall.green, colorSmall.blue));
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -823,14 +841,14 @@ public:
 
 		GenerateRandomTarget();
 		
-		SetBig(true);
+		SetBig(false);
 		visible = true;
 
 		boundingBox = GetBoundingBox();
 	}
 
-	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest) {
-		Init(red, green, blue, renderer, movementSpeed, width, height, forest);
+	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, Color colorSmall, Color colorBig) {
+		Init(red, green, blue, renderer, movementSpeed, width, height, forest, colorSmall, colorBig);
 	}
 
 	void Move() {
@@ -875,8 +893,8 @@ public:
 
 		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
 
-		if (toSet == true) SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 255, 0, 255));
-		else SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, 200, 0, 200));
+		if (toSet == true) SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorBig.red, colorBig.green, colorBig.blue));
+		else SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorSmall.red, colorSmall.green, colorSmall.blue));
 
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -1260,11 +1278,11 @@ public:
 		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
 
-		forest = new Forest(gameRenderer, 2);
+		forest = new Forest(gameRenderer, 2, forestGreen, orange, gray);
 
-		enemies[0] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
-		enemies[1] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
-		enemies[2] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest);
+		enemies[0] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
+		enemies[1] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
+		enemies[2] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
 		
 
 		spawner = new Spawner(1, 15, forest, enemies);
