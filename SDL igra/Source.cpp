@@ -969,12 +969,42 @@ public:
 	}
 };
 
+class Clock {
+	int framesToCountdown;
+	int framesRemaining;
+	int FPS;
+
+public:
+	Clock(int seconds, int FPS) {
+		this->FPS = FPS;
+		Reset(seconds);
+	}
+
+	void Update() {
+		framesRemaining--;
+	}
+
+	bool IsTimeUp() {
+		return framesRemaining <= 0;
+	}
+
+	int GetTimeRemaining() {
+		return framesRemaining / FPS;
+	}
+
+	void Reset(int seconds) {
+		framesToCountdown = seconds * FPS;
+		framesRemaining = framesToCountdown;
+	}
+};
+
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
 Forest* forest;
 Spawner* spawner;
 vector<Enemy*> enemies(3);
+Clock* gameClock;
 
 class Game
 {
@@ -1105,6 +1135,8 @@ public:
 
 		spawner = new Spawner(1, 15, forest, enemies);
 
+		gameClock = new Clock(10, 60);
+
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
 		}
@@ -1171,6 +1203,9 @@ public:
 
 		spawner->Update();
 
+		gameClock->Update();
+
+		cout << gameClock->GetTimeRemaining() << endl;
 
 		UpdateSpawnSquares();
 	};
@@ -1238,8 +1273,3 @@ int main(int argc, char* argv[]) {
 
 	return 0;
 }
-
-//Fire Expansion
-//50% chance to spawn fire
-//increment x and y by 64
-//call start burning
