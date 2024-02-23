@@ -4,7 +4,7 @@
 #include <vector>
 #include <ctime>
 #include <cmath>
-#include <list>
+#include <string>
 
 using namespace std;
 
@@ -14,13 +14,16 @@ struct Color {
 	int blue;
 };
 
-
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
 Color orange{ 251, 139, 35};
 
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
+
+const char* pyroSmallPath = "Assets/pyromaniac.png";
+const char* pyroBigPath = "Assets/pyromaniac-big.png";
+
 
 struct Level {
 	float timeToBurn,
@@ -117,7 +120,6 @@ protected:
 	SDL_Texture* texture;
 	SDL_Rect sourceRectangle, destinationRectangle;
 	SDL_Renderer* renderer;
-	SDL_Surface* tempSurface;
 
 	void UpdateSourceRectangle() {
 		sourceRectangle.h = height;
@@ -815,7 +817,7 @@ class Enemy : public GameObject {
 
 	SDL_Rect boundingBox;
 
-	Color colorSmall, colorBig;
+	const char *pathImageSmall, *pathImageBig;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -826,20 +828,19 @@ class Enemy : public GameObject {
 	}
 
 public:
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, Color colorSmall, Color colorBig) {
+	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
 		this->width = width;
 		this->height = height;
 
-		this->colorSmall = colorSmall;
-		this->colorBig = colorBig;
-
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorSmall.red, colorSmall.green, colorSmall.blue));
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
+		this->pathImageSmall = pathImageSmall;
+		this->pathImageBig = pathImageBig;
 
 		this->renderer = renderer;
-		
+
+		SDL_Surface* tempSurface = IMG_Load(pathImageSmall);
+		this->texture = SDL_CreateTextureFromSurface(this->renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
 		this->forest = forest;
 
 		Reset(movementSpeed);
@@ -860,8 +861,8 @@ public:
 		boundingBox = GetBoundingBox();
 	}
 
-	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, Color colorSmall, Color colorBig) {
-		Init(red, green, blue, renderer, movementSpeed, width, height, forest, colorSmall, colorBig);
+	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
+		Init(red, green, blue, renderer, movementSpeed, width, height, forest, pathImageSmall, pathImageBig);
 	}
 
 	void Move() {
@@ -904,10 +905,8 @@ public:
 
 		isBig = toSet;
 
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-
-		if (toSet == true) SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorBig.red, colorBig.green, colorBig.blue));
-		else SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, colorSmall.red, colorSmall.green, colorSmall.blue));
+		if (toSet == true) SDL_Surface* tempSurface = IMG_Load(pathImageSmall);
+		else; SDL_Surface* tempSurface = IMG_Load(pathImageBig);
 
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -1296,9 +1295,9 @@ public:
 
 		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
-		enemies[0] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
-		enemies[1] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
-		enemies[2] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
+		enemies[0] = new Enemy(200, 0, 0, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
+		enemies[1] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
+		enemies[2] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
 		
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 
