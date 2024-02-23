@@ -15,7 +15,7 @@ struct Color {
 
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
-Color orange{ 255, 107, 107};
+Color orange{ 251, 139, 35};
 
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
@@ -29,6 +29,17 @@ struct Level {
 		playerSpeed,
 		allySpeed,
 		enemySpeed;
+};
+
+class TextureManager {
+public:
+		static SDL_Texture* LoadTexture(const char* fileName, SDL_Renderer* renderer) {
+		SDL_Surface* tempSurface = SDL_LoadBMP(fileName);
+		SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+		return texture;
+	}
 };
 
 class FrameManager {
@@ -1245,7 +1256,7 @@ class Game
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
-
+		
 		if (fullscreen) {
 			flags = SDL_WINDOW_FULLSCREEN;
 		}
@@ -1267,34 +1278,33 @@ public:
 			isRunning = true;
 		}
 
-		player = new Player(255, 255, 255, gameRenderer, 0, 0, 5, 32, 32, false);
+		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
+		levels[1] = { 2, 0.5, 10, 60, 5, 1, 2 };
+
+		player = new Player(255, 255, 255, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
 		playerSpawnSquares[1] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, 0, 0, 64, 64, true);
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
 
-		allies[0] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
-		allies[1] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
-		allies[2] = new Ally(0, 0, 255, gameRenderer, 1, 32, 32);
+		allies[0] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[1] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[2] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
 
-		forest = new Forest(gameRenderer, 2, forestGreen, orange, gray);
+		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
-		enemies[0] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
-		enemies[1] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
-		enemies[2] = new Enemy(200, 0, 200, gameRenderer, 1, 32, 32, forest, red, pink);
+		enemies[0] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
+		enemies[1] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
+		enemies[2] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, red, pink);
 		
-
-		spawner = new Spawner(1, 15, forest, enemies);
-
-		gameClock = new Clock(10, Util::FPS);
+		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
 		}
 
-		levels[0] = { 1, 5, 15, 60, 5, 1, 1 };
-		levels[1] = { 2, 5, 15, 60, 5, 1, 1 };
+		gameClock = new Clock(levels[0].time, Util::FPS);
 		
 	}
 
