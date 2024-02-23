@@ -21,10 +21,10 @@ Color orange{ 251, 139, 35};
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
 
-const char* pyroSmallPath = "Assets/pyromaniac.png";
-const char* pyroBigPath = "Assets/pyromaniac-big.png";
-const char* firefigherPath = "Assets/firefighter.png";
-const char* nativePath = "Assets/native.png";
+const char* pyroSmallPath = "Assets/pyromaniac-right.png";
+const char* pyroBigPath = "Assets/pyromaniac-big-right.png";
+const char* firefigherPath = "Assets/firefighter-right.png";
+const char* nativePath = "Assets/native-right.png";
 
 struct Level {
 	float timeToBurn,
@@ -595,7 +595,7 @@ public:
 		int treeX = tree->GetX() + tree->getWidth() / 2;
 		int treeY = tree->GetY() + tree->getHeight() / 2;
 
-		IsInRange(treeX, treeY, range);
+		return IsInRange(treeX, treeY, range);
 	}
 
 	void SetTarget(int x, int y, int width, int height) {
