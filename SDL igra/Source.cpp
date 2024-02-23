@@ -23,7 +23,8 @@ Color pink{ 166, 30, 77 };
 
 const char* pyroSmallPath = "Assets/pyromaniac.png";
 const char* pyroBigPath = "Assets/pyromaniac-big.png";
-
+const char* firefigherPath = "Assets/firefighter.png";
+const char* nativePath = "Assets/native.png";
 
 struct Level {
 	float timeToBurn,
@@ -182,6 +183,22 @@ public:
 
 	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
 		Init(red, green, blue, renderer, x, y, movementSpeed, width, height, visible);
+	}
+
+	GameObject(const char* imagePath, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = IMG_Load(imagePath);
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+
+		this->renderer = renderer;
+		this->x = x;
+		this->y = y;
+
+		Reset(movementSpeed, visible);
 	}
 
 	void Hide() {
@@ -528,6 +545,19 @@ public:
 		Init(red, green, blue, renderer, movementSpeed, width, height);
 	}
 
+	Ally(const char* imagePath, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
+		this->width = width;
+		this->height = height;
+
+		SDL_Surface* tempSurface = IMG_Load(imagePath);
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+		this->renderer = renderer;
+
+		Reset(movementSpeed);
+	}
+
 	void Move() {
 		float dx = targetX - x;
 		float dy = targetY - y;
@@ -637,6 +667,7 @@ class Forest{
 	void UpdateTreesInDestruction() {
 		vector<Tree*>::iterator it = treesInDestruction.begin();
 
+
 		while (it != treesInDestruction.end()) {
 			if ((*it)->GetIsDestroyed()) {
 				int column = (*it)->GetSpreadX() / 64;
@@ -646,7 +677,6 @@ class Forest{
 
 				if (column >= 0 && row >= 0  && column <= columns * tileSize && row <= rows * tileSize && CanBeDestroyed(row, column)) {
 					trees[row][column]->StartBurning();
-					cout << "Spread\n";
 				}
 
 				it = treesInDestruction.erase(it);
@@ -828,6 +858,21 @@ class Enemy : public GameObject {
 	}
 
 public:
+	void Reset(int movementSpeed) {
+		spawnX = x = Util::GetRandomX(width);
+		spawnY = y = Util::GetRandomY(height);
+		this->movementSpeed = movementSpeed;
+
+		UpdateSourceRectangle();
+
+		GenerateRandomTarget();
+		
+		SetBig(false);
+		visible = true;
+
+		boundingBox = GetBoundingBox();
+	}
+
 	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
 		this->width = width;
 		this->height = height;
@@ -844,21 +889,6 @@ public:
 		this->forest = forest;
 
 		Reset(movementSpeed);
-	}
-
-	void Reset(int movementSpeed) {
-		spawnX = x = Util::GetRandomX(width);
-		spawnY = y = Util::GetRandomY(height);
-		this->movementSpeed = movementSpeed;
-
-		UpdateSourceRectangle();
-
-		GenerateRandomTarget();
-		
-		SetBig(false);
-		visible = true;
-
-		boundingBox = GetBoundingBox();
 	}
 
 	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
@@ -1282,16 +1312,16 @@ public:
 		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
 		levels[1] = { 2, 0.5, 10, 60, 5, 1, 2 };
 
-		player = new Player(255, 255, 255, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
+		player = new Player(firefigherPath, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
 		playerSpawnSquares[1] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, 0, 0, 64, 64, true);
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
 
-		allies[0] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
-		allies[1] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
-		allies[2] = new Ally(0, 0, 255, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[0] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[1] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[2] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
 
 		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
