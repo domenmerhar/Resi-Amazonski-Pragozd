@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <SDL_image.h>
 #include <iostream>
 #include <vector>
 #include <ctime>
@@ -12,6 +13,7 @@ struct Color {
 	int green;
 	int blue;
 };
+
 
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
