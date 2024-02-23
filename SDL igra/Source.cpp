@@ -21,13 +21,18 @@ Color orange{ 251, 139, 35};
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
 
-const char* pyroSmallPath = "Assets/pyromaniac-right.png";
-const char* pyroBigPath = "Assets/pyromaniac-big-right.png";
+const char* pyroSmallPathRight = "Assets/pyromaniac-right.png";
+const char* pyroSmallPathLeft = "Assets/pyromaniac-left.png";
+
+
+const char* pyroBigPathRight = "Assets/pyromaniac-big-right.png";
+const char* pyroBigPathLeft = "Assets/pyromaniac-big-left.png";
 
 const char* firefigherPathRight = "Assets/firefighter-right.png";
 const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
 const char* nativePath = "Assets/native-right.png";
+const char* nativePathLeft = "Assets/native-left.png";
 
 struct Level {
 	float timeToBurn,
@@ -890,7 +895,7 @@ class Enemy : public GameObject {
 
 	SDL_Rect boundingBox;
 
-	const char *pathImageSmall, *pathImageBig;
+	const char* pathImageSmallLeft, * pathImageSmallRight, * pathImageBigLeft, * pathImageBigRight;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -916,16 +921,20 @@ public:
 		boundingBox = GetBoundingBox();
 	}
 
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
+	void Init(SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, 
+		const char* pathImageSmallLeft, const char* pathImageSmallRight, const char* pathImageBigRight, const char* pathImageBigLeft) {
 		this->width = width;
 		this->height = height;
 
-		this->pathImageSmall = pathImageSmall;
-		this->pathImageBig = pathImageBig;
+		this->pathImageSmallLeft = pathImageSmallLeft;
+		this->pathImageSmallRight = pathImageSmallRight;
+		
+		this->pathImageBigLeft= pathImageBigLeft;
+		this->pathImageBigRight = pathImageBigRight;
 
 		this->renderer = renderer;
 
-		SDL_Surface* tempSurface = IMG_Load(pathImageSmall);
+		SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
 		this->texture = SDL_CreateTextureFromSurface(this->renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -934,8 +943,9 @@ public:
 		Reset(movementSpeed);
 	}
 
-	Enemy(int red, int green, int blue, SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, const char* pathImageSmall, const char* pathImageBig) {
-		Init(red, green, blue, renderer, movementSpeed, width, height, forest, pathImageSmall, pathImageBig);
+	Enemy(SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest,
+		const char* pathImageSmallLeft, const char* pathImageSmallRight, const char* pathImageBigRight, const char* pathImageBigLeft) {
+		Init(renderer, movementSpeed, width, height, forest, pathImageSmallLeft, pathImageSmallRight,  pathImageBigLeft, imagePathRight);
 	}
 
 	void Move() {
@@ -959,6 +969,28 @@ public:
 				forest->StartBurning(targetRow, targetColumn);
 				GenerateRandomTarget();
 			}
+
+
+			if (dx > 0 && !isBig) {
+				SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+			else if (dx < 0 && !isBig) {
+				SDL_Surface* tempSurface = IMG_Load(pathImageSmallLeft);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+			else if (dx > 0 && isBig) {
+				SDL_Surface* tempSurface = IMG_Load(pathImageBigRight);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+			else if (dx < 0 && isBig) {
+				SDL_Surface* tempSurface = IMG_Load(pathImageBigLeft);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
 		}
 	}
 
@@ -978,8 +1010,8 @@ public:
 
 		isBig = toSet;
 
-		if (toSet == true) SDL_Surface* tempSurface = IMG_Load(pathImageSmall);
-		else; SDL_Surface* tempSurface = IMG_Load(pathImageBig);
+		if (toSet == true) SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
+		else; SDL_Surface* tempSurface = IMG_Load(pathImageBigRight);
 
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
@@ -1368,10 +1400,10 @@ public:
 
 		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
-		enemies[0] = new Enemy(200, 0, 0, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
-		enemies[1] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
-		enemies[2] = new Enemy(200, 0, 200, gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPath, pyroBigPath);
-		
+		enemies[0] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
+		enemies[1] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
+		enemies[2] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
+
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 
 		for (int i = 0; i < allies.size(); i++) {
