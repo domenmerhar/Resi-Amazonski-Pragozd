@@ -23,7 +23,10 @@ Color pink{ 166, 30, 77 };
 
 const char* pyroSmallPath = "Assets/pyromaniac-right.png";
 const char* pyroBigPath = "Assets/pyromaniac-big-right.png";
-const char* firefigherPath = "Assets/firefighter-right.png";
+
+const char* firefigherPathRight = "Assets/firefighter-right.png";
+const char* firefighterPathLeft = "Assets/firefighter-left.png";
+
 const char* nativePath = "Assets/native-right.png";
 
 struct Level {
@@ -122,6 +125,8 @@ protected:
 	SDL_Rect sourceRectangle, destinationRectangle;
 	SDL_Renderer* renderer;
 
+	const char* imagePathRight;
+
 	void UpdateSourceRectangle() {
 		sourceRectangle.h = height;
 		sourceRectangle.w = width;
@@ -185,11 +190,13 @@ public:
 		Init(red, green, blue, renderer, x, y, movementSpeed, width, height, visible);
 	}
 
-	GameObject(const char* imagePath, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
+	GameObject(const char* imagePathRight, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
 		this->width = width;
 		this->height = height;
 
-		SDL_Surface* tempSurface = IMG_Load(imagePath);
+		this->imagePathRight = imagePathRight;
+
+		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -781,6 +788,8 @@ public:
 };
 
 class Player : public GameObject {
+	const char* imagePathLeft;
+
 public:
 	using GameObject::GameObject;
 
@@ -814,6 +823,18 @@ public:
 
 			x += dx * movementSpeed;
 			y += dy * movementSpeed;
+
+
+			if (dx > 0) {
+				SDL_Surface* tempSurface = IMG_Load(imagePathRight);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+			else if (dx < 0) {
+				SDL_Surface* tempSurface = IMG_Load(imagePathLeft);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
 		}
 	}
 
@@ -835,6 +856,25 @@ public:
 			UpdateSourceRectangle();
 			UpdateDestinationRectangle();
 		}
+	}
+
+	Player(const char* imagePathRight, const char* imagePathLeft, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
+		this->width = width;
+		this->height = height;
+
+		this->imagePathRight = imagePathRight;
+		this->imagePathLeft = imagePathLeft;
+
+		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
+		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+		SDL_FreeSurface(tempSurface);
+
+
+		this->renderer = renderer;
+		this->x = x;
+		this->y = y;
+
+		Reset(movementSpeed, visible);
 	}
 };
 
@@ -1315,7 +1355,7 @@ public:
 		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
 		levels[1] = { 2, 0.5, 10, 60, 5, 1, 2 };
 
-		player = new Player(firefigherPath, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
+		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
 		playerSpawnSquares[1] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, 0, 0, 64, 64, true);
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
