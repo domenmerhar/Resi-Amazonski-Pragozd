@@ -666,17 +666,16 @@ class Forest{
 
 	void UpdateTreesInDestruction() {
 		vector<Tree*>::iterator it = treesInDestruction.begin();
-
+		vector<Tree*> treesToAdd;
 
 		while (it != treesInDestruction.end()) {
 			if ((*it)->GetIsDestroyed()) {
 				int column = (*it)->GetSpreadX() / 64;
 				int row = (*it)->GetSpreadY() / 64;
 
-				cout << "SpreadX: " << column << " SpreadY: " << row << endl;
-
-				if (column >= 0 && row >= 0  && column <= columns * tileSize && row <= rows * tileSize && CanBeDestroyed(row, column)) {
+				if (column >= 0 && row >= 0 && column <= columns * tileSize && row <= rows * tileSize && CanBeDestroyed(row, column)) {
 					trees[row][column]->StartBurning();
+					treesToAdd.push_back(trees[row][column]);
 				}
 
 				it = treesInDestruction.erase(it);
@@ -689,6 +688,10 @@ class Forest{
 			else {
 				++it;
 			}
+		}
+
+		for (Tree* tree : treesToAdd) {
+			treesInDestruction.push_back(tree);
 		}
 	}
 
