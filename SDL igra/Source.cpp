@@ -31,7 +31,7 @@ const char* pyroBigPathLeft = "Assets/pyromaniac-big-left.png";
 const char* firefigherPathRight = "Assets/firefighter-right.png";
 const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
-const char* nativePath = "Assets/native-right.png";
+const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
 struct Level {
@@ -521,6 +521,8 @@ class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
 
+	const char* imagePathLeft, *imagePathRight;
+
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
 		targetY = Util::GetRandomY(height);
@@ -557,11 +559,14 @@ public:
 		Init(red, green, blue, renderer, movementSpeed, width, height);
 	}
 
-	Ally(const char* imagePath, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
+	Ally(const char* imagePathRight, const char* imagePathLeft, SDL_Renderer* renderer, int movementSpeed, int width, int height) {
 		this->width = width;
 		this->height = height;
 
-		SDL_Surface* tempSurface = IMG_Load(imagePath);
+		this->imagePathRight = imagePathRight;
+		this->imagePathLeft = imagePathLeft;
+
+		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
 		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
 		SDL_FreeSurface(tempSurface);
 
@@ -582,6 +587,17 @@ public:
 
 			x += round(dx * movementSpeed);
 			y += round(dy * movementSpeed);
+
+			if (dx < 0) {
+				SDL_Surface* tempSurface = IMG_Load(imagePathRight);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
+			else if (dx > 0) {
+				SDL_Surface* tempSurface = IMG_Load(imagePathLeft);
+				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
+				SDL_FreeSurface(tempSurface);
+			}
 		}
 		else {
 			GenerateRandomTarget();
@@ -1394,9 +1410,9 @@ public:
 		playerSpawnSquares[3] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, Util::windowHeight - 64, 0, 64, 64, true);
 		playerSpawnSquares[4] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth / 2 - 64, Util::windowHeight  / 2- 64, 0, 64, 64, true);
 
-		allies[0] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
-		allies[1] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
-		allies[2] = new Ally(nativePath, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[0] = new Ally(nativePathLeft, nativePathRight, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[1] = new Ally(nativePathLeft, nativePathRight, gameRenderer, levels[0].allySpeed, 32, 32);
+		allies[2] = new Ally(nativePathLeft, nativePathRight, gameRenderer, levels[0].allySpeed, 32, 32);
 
 		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
