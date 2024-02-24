@@ -24,7 +24,6 @@ Color pink{ 166, 30, 77 };
 const char* pyroSmallPathRight = "Assets/pyromaniac-right.png";
 const char* pyroSmallPathLeft = "Assets/pyromaniac-left.png";
 
-
 const char* pyroBigPathRight = "Assets/pyromaniac-big-right.png";
 const char* pyroBigPathLeft = "Assets/pyromaniac-big-left.png";
 
@@ -521,7 +520,7 @@ class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
 
-	const char* imagePathLeft, *imagePathRight;
+	SDL_Surface *surfaceLeft, *surfaceRight;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -563,12 +562,10 @@ public:
 		this->width = width;
 		this->height = height;
 
-		this->imagePathRight = imagePathRight;
-		this->imagePathLeft = imagePathLeft;
+		surfaceRight = IMG_Load(imagePathRight);
+		surfaceLeft = IMG_Load(imagePathLeft);
 
-		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
+		texture = SDL_CreateTextureFromSurface(renderer, surfaceRight);
 
 		this->renderer = renderer;
 
@@ -588,15 +585,11 @@ public:
 			x += round(dx * movementSpeed);
 			y += round(dy * movementSpeed);
 
-			if (dx < 0) {
-				SDL_Surface* tempSurface = IMG_Load(imagePathRight);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+			if (dx > 0) {
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceLeft);
 			}
-			else if (dx > 0) {
-				SDL_Surface* tempSurface = IMG_Load(imagePathLeft);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+			else if (dx < 0) {
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceRight);
 			}
 		}
 		else {
@@ -809,7 +802,7 @@ public:
 };
 
 class Player : public GameObject {
-	const char* imagePathLeft;
+		SDL_Surface* surfaceLeft, *surfaceRight;
 
 public:
 	using GameObject::GameObject;
@@ -845,17 +838,9 @@ public:
 			x += dx * movementSpeed;
 			y += dy * movementSpeed;
 
+			if(dx < 0) texture = SDL_CreateTextureFromSurface(renderer, surfaceRight);
+			else if(dx > 0) texture = SDL_CreateTextureFromSurface(renderer, surfaceLeft);
 
-			if (dx > 0) {
-				SDL_Surface* tempSurface = IMG_Load(imagePathRight);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
-			}
-			else if (dx < 0) {
-				SDL_Surface* tempSurface = IMG_Load(imagePathLeft);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
-			}
 		}
 	}
 
@@ -883,12 +868,10 @@ public:
 		this->width = width;
 		this->height = height;
 
-		this->imagePathRight = imagePathRight;
-		this->imagePathLeft = imagePathLeft;
+		surfaceLeft = IMG_Load(imagePathRight);
+		surfaceRight = IMG_Load(imagePathLeft);
 
-		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
+		texture = SDL_CreateTextureFromSurface(renderer, surfaceRight);
 
 
 		this->renderer = renderer;
@@ -911,7 +894,7 @@ class Enemy : public GameObject {
 
 	SDL_Rect boundingBox;
 
-	const char* pathImageSmallLeft, * pathImageSmallRight, * pathImageBigLeft, * pathImageBigRight;
+	SDL_Surface *surfaceSmallLeft, *surfaceSmallRight, *surfaceBigLeft, *surfaceBigRight;
 
 	void GenerateRandomTarget() {
 		targetX = Util::GetRandomX(width);
@@ -937,31 +920,32 @@ public:
 		boundingBox = GetBoundingBox();
 	}
 
-	void Init(SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest, 
-		const char* pathImageSmallLeft, const char* pathImageSmallRight, const char* pathImageBigRight, const char* pathImageBigLeft) {
-		this->width = width;
-		this->height = height;
-
-		this->pathImageSmallLeft = pathImageSmallLeft;
-		this->pathImageSmallRight = pathImageSmallRight;
-		
-		this->pathImageBigLeft= pathImageBigLeft;
-		this->pathImageBigRight = pathImageBigRight;
-
-		this->renderer = renderer;
-
-		SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
-		this->texture = SDL_CreateTextureFromSurface(this->renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
-
-		this->forest = forest;
-
-		Reset(movementSpeed);
-	}
-
 	Enemy(SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest,
 		const char* pathImageSmallLeft, const char* pathImageSmallRight, const char* pathImageBigRight, const char* pathImageBigLeft) {
-		Init(renderer, movementSpeed, width, height, forest, pathImageSmallLeft, pathImageSmallRight,  pathImageBigLeft, imagePathRight);
+
+			cout << pathImageBigRight << endl;
+			cout << pathImageBigLeft << endl;
+			cout << pathImageSmallLeft << endl;
+			cout << pathImageBigLeft << endl;
+
+			this->width = width;
+			this->height = height;
+
+			surfaceSmallLeft = IMG_Load(pathImageSmallLeft);
+			surfaceSmallRight = IMG_Load(pathImageSmallRight);
+
+			surfaceBigLeft = IMG_Load(pathImageBigLeft);
+			surfaceBigRight = IMG_Load(pathImageBigRight);
+
+			this->renderer = renderer;
+
+			SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
+			this->texture = SDL_CreateTextureFromSurface(this->renderer, tempSurface);
+			SDL_FreeSurface(tempSurface);
+
+			this->forest = forest;
+
+			Reset(movementSpeed);
 	}
 
 	void Move() {
@@ -988,24 +972,16 @@ public:
 
 
 			if (dx > 0 && !isBig) {
-				SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceSmallRight);
 			}
 			else if (dx < 0 && !isBig) {
-				SDL_Surface* tempSurface = IMG_Load(pathImageSmallLeft);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceSmallLeft);
 			}
 			else if (dx > 0 && isBig) {
-				SDL_Surface* tempSurface = IMG_Load(pathImageBigRight);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceBigRight);
 			}
 			else if (dx < 0 && isBig) {
-				SDL_Surface* tempSurface = IMG_Load(pathImageBigLeft);
-				texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-				SDL_FreeSurface(tempSurface);
+				texture = SDL_CreateTextureFromSurface(renderer, surfaceBigLeft);
 			}
 		}
 	}
@@ -1025,12 +1001,6 @@ public:
 		if (isBig == toSet) return;
 
 		isBig = toSet;
-
-		if (toSet == true) SDL_Surface* tempSurface = IMG_Load(pathImageSmallRight);
-		else; SDL_Surface* tempSurface = IMG_Load(pathImageBigRight);
-
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
 	}
 
 	bool GetIsBig() {
