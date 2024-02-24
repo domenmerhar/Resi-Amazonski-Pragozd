@@ -922,12 +922,6 @@ public:
 
 	Enemy(SDL_Renderer* renderer, int movementSpeed, int width, int height, Forest* forest,
 		const char* pathImageSmallLeft, const char* pathImageSmallRight, const char* pathImageBigRight, const char* pathImageBigLeft) {
-
-			cout << pathImageBigRight << endl;
-			cout << pathImageBigLeft << endl;
-			cout << pathImageSmallLeft << endl;
-			cout << pathImageBigLeft << endl;
-
 			this->width = width;
 			this->height = height;
 
@@ -977,13 +971,15 @@ public:
 			else if (dx < 0 && !isBig) {
 				texture = SDL_CreateTextureFromSurface(renderer, surfaceSmallLeft);
 			}
-			else if (dx > 0 && isBig) {
+			else if (dx < 0 && isBig) {
 				texture = SDL_CreateTextureFromSurface(renderer, surfaceBigRight);
 			}
-			else if (dx < 0 && isBig) {
+			else if (dx > 0 && isBig) {
 				texture = SDL_CreateTextureFromSurface(renderer, surfaceBigLeft);
 			}
 		}
+
+		cout << isBig << endl;
 	}
 
 	void Hide() {
@@ -1027,8 +1023,6 @@ public:
 				}
 
 				if (SDL_HasIntersection(&allyBoundingBox, &boundingBox)) {
-					cout << "Collision detected with ally!" << endl;
-
 					if (!isBig) Hide();  
 					else if(isBig) {
 						if (SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
@@ -1043,13 +1037,11 @@ public:
 		}
 
 		for (Enemy* enemy : enemies) {
-			if (enemy != nullptr && enemy->GetIsVisible()) {
+			if (enemy != nullptr && enemy->GetIsVisible() && enemy != this) {
 				SDL_Rect enemyBoundingBox = enemy->GetBoundingBox();
-				if (enemy != this) {
-					if (SDL_HasIntersection(&enemyBoundingBox, &boundingBox) && isBig == false) {
-						enemy->Hide();
-						SetBig(true);
-					}
+				if (SDL_HasIntersection(&enemyBoundingBox, &boundingBox) && isBig == false) {
+					enemy->Hide();
+					SetBig(true);
 				}
 			}
 		}
@@ -1062,7 +1054,6 @@ public:
 		}
 		else if (!isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
 			this->Hide();
-			cout << "Bouding box x: " << boundingBox.x << " y: " << boundingBox.y << endl;
 		}
 	}
 };
@@ -1386,9 +1377,9 @@ public:
 
 		forest = new Forest(gameRenderer, levels[0].timeToBurn, forestGreen, orange, gray);
 
-		enemies[0] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
-		enemies[1] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
-		enemies[2] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroBigPathRight, pyroBigPathLeft, pyroBigPathRight);
+		enemies[0] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroSmallPathRight, pyroBigPathLeft, pyroBigPathRight);
+		enemies[1] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroSmallPathRight, pyroBigPathLeft, pyroBigPathRight);
+		enemies[2] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroSmallPathRight, pyroBigPathLeft, pyroBigPathRight);
 
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 
@@ -1429,7 +1420,7 @@ public:
 		gameClock->Update();
 		
 		HandleLevels();
-		cout << gameClock->GetTimeRemaining() << endl;
+		//cout << gameClock->GetTimeRemaining() << endl;
 		
 		UpdateSpawnSquares();
 	};
