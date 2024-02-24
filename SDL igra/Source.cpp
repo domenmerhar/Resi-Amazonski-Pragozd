@@ -1,4 +1,4 @@
-#include <SDL.h>
+#include "SDL.h"
 #include <SDL_image.h>
 #include <iostream>
 #include <vector>
@@ -978,8 +978,6 @@ public:
 				texture = SDL_CreateTextureFromSurface(renderer, surfaceBigLeft);
 			}
 		}
-
-		cout << isBig << endl;
 	}
 
 	void Hide() {
@@ -1047,13 +1045,14 @@ public:
 			}
 		}
 
+		if (!isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
+			this->Hide();
+		}
+
 		if (!player->GetIsVisible() || invinciblePlayer) return;
 
 		if (isBig &&  SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
 			player->Hide();
-		}
-		else if (!isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
-			this->Hide();
 		}
 	}
 };
@@ -1420,7 +1419,7 @@ public:
 		gameClock->Update();
 		
 		HandleLevels();
-		//cout << gameClock->GetTimeRemaining() << endl;
+		cout << gameClock->GetTimeRemaining() << endl;
 		
 		UpdateSpawnSquares();
 	};
