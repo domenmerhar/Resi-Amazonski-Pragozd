@@ -468,7 +468,7 @@ public:
 	}
 
 	SDL_Rect GetBoundingBox() {
-		SDL_Rect boundingBox = { x, y, width, height };
+		SDL_Rect boundingBox = { x - width / 2, y - height / 2, width, height };
 		return boundingBox;
 	}
 
@@ -1004,9 +1004,10 @@ public:
 	}
 
 	void HandleCollision(vector<Ally*> allies, vector<Enemy*> enemies, Player *player) {
+		if (!visible) return;
+
 		boundingBox = GetBoundingBox();
 
-		if (!visible) return;
 
 		SDL_Rect boundingBox = GetBoundingBox();
 		SDL_Rect playerBoundingBox = player->GetBoundingBox();
@@ -1026,7 +1027,7 @@ public:
 					if (!isBig) Hide();  
 					else if(isBig) {
 						if (SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
-							Hide();
+							this->Hide();
 						}
 						else if(!playerIsCloseToAlly) {
 							ally->Hide();
@@ -1045,7 +1046,6 @@ public:
 				}
 			}
 		}
-
 
 		if (!player->GetIsVisible() || invinciblePlayer) return;
 
