@@ -7,6 +7,7 @@
 #include <string>
 
 #include "Color.h"
+#include "Level.h"
 
 using namespace std;
 
@@ -29,16 +30,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
-struct Level {
-	float timeToBurn,
-		  timeToSpawnDestruction,
-		  timeToSpawnEnemy;
-	
-	int time,
-		playerSpeed,
-		allySpeed,
-		enemySpeed;
-};
 
 class TextureManager {
 public:
