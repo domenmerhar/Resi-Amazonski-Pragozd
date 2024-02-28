@@ -8,6 +8,7 @@
 
 #include "Color.h"
 #include "Level.h"
+#include "FrameManager.h"
 
 using namespace std;
 
@@ -29,30 +30,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
-
-class FrameManager {
-	Uint32 frameStart = NULL;
-	int FPS;
-	int frameDelay;
-
-public:
-	FrameManager(int FPS) {
-		this->FPS = FPS;
-		frameDelay = 1000 / FPS;
-	};
-
-	void StartFrame() {
-		frameStart = SDL_GetTicks();
-	};
-
-	void EndFrame() {
-		int frameTime = SDL_GetTicks() - frameStart;
-
-		if (frameDelay > frameTime) {
-			SDL_Delay(frameDelay - frameTime);
-		}
-	}
-};
 
 class Util {
 public:
