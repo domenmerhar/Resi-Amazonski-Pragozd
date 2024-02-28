@@ -30,18 +30,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
-
-class TextureManager {
-public:
-		static SDL_Texture* LoadTexture(const char* fileName, SDL_Renderer* renderer) {
-		SDL_Surface* tempSurface = SDL_LoadBMP(fileName);
-		SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
-
-		return texture;
-	}
-};
-
 class FrameManager {
 	Uint32 frameStart = NULL;
 	int FPS;
