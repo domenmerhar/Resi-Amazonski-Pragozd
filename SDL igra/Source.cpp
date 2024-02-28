@@ -1,4 +1,4 @@
-#include "SDL.h"
+#include <SDL.h>
 #include <SDL_image.h>
 #include <iostream>
 #include <vector>
@@ -6,13 +6,9 @@
 #include <cmath>
 #include <string>
 
-using namespace std;
+#include "Color.h"
 
-struct Color {
-	int red;
-	int green;
-	int blue;
-};
+using namespace std;
 
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
