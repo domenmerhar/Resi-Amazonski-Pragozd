@@ -11,6 +11,7 @@
 #include "FrameManager.h"
 #include "Util.h"
 #include "GameObject.h"	
+#include "Tree.h"
 
 using namespace std;
 
@@ -33,6 +34,7 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
+/*
 class Tree{
 	int x, y, width, height;
 
@@ -297,7 +299,7 @@ public:
 		SDL_FreeSurface(tempSurface);
 	}
 };
-
+*/
 class Ally : public GameObject {
 	int spawnX, spawnY;
 	int targetX, targetY;
