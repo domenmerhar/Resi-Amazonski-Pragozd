@@ -10,6 +10,7 @@
 #include "Level.h"
 #include "FrameManager.h"
 #include "Util.h"
+#include "GameObject.h"	
 
 using namespace std;
 
@@ -31,137 +32,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
-
-class GameObject {
-protected:
-	int x, y, movementSpeed, width, height;
-	bool visible;
-
-	SDL_Texture* texture;
-	SDL_Rect sourceRectangle, destinationRectangle;
-	SDL_Renderer* renderer;
-
-	const char* imagePathRight;
-
-	void UpdateSourceRectangle() {
-		sourceRectangle.h = height;
-		sourceRectangle.w = width;
-		sourceRectangle.x = 0;
-		sourceRectangle.y = 0;
-	}
-
-	void UpdateDestinationRectangle() {
-		if (Util::WithinBoundsX(x, width)) destinationRectangle.x = x;
-		else
-			x = destinationRectangle.x = Util::ResetX(x, width);
-
-		if (Util::WithinBoundsY(y, height * 2)) destinationRectangle.y = y;
-		else y = destinationRectangle.y = Util::ResetY(y, height * 2);
-
-		destinationRectangle.w = sourceRectangle.w * 2;
-		destinationRectangle.h = sourceRectangle.h * 2;
-	}
-
-	void Init(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
-		this->width = width;
-		this->height = height;
-
-		SDL_Surface* tempSurface = SDL_CreateRGBSurface(0, width, height, 16, 0, 0, 0, 0);
-		SDL_FillRect(tempSurface, NULL, SDL_MapRGB(tempSurface->format, red, green, blue));
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
-
-
-		this->renderer = renderer;
-		this->x = x;
-		this->y = y;
-
-		Reset(movementSpeed, visible);
-	}
-
-public:
-	void Update() {
-		if (visible) {
-			UpdateSourceRectangle();
-			UpdateDestinationRectangle();
-		}
-	}
-
-	void Render() {
-        if(visible) SDL_RenderCopy(renderer, texture, &sourceRectangle, &destinationRectangle);
-	}
-
-	void Reset(int movementSpeed, bool isVisible) {
-		this->movementSpeed = movementSpeed;
-		visible = isVisible;
-
-		UpdateSourceRectangle();
-	}
-
-	GameObject() {
-		Init(255, 255, 255, NULL, 0, 0, 0, 32, 32, true);
-	}
-
-	GameObject(int red, int green, int blue, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
-		Init(red, green, blue, renderer, x, y, movementSpeed, width, height, visible);
-	}
-
-	GameObject(const char* imagePathRight, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible) {
-		this->width = width;
-		this->height = height;
-
-		this->imagePathRight = imagePathRight;
-
-		SDL_Surface* tempSurface = IMG_Load(imagePathRight);
-		texture = SDL_CreateTextureFromSurface(renderer, tempSurface);
-		SDL_FreeSurface(tempSurface);
-
-
-		this->renderer = renderer;
-		this->x = x;
-		this->y = y;
-
-		Reset(movementSpeed, visible);
-	}
-
-	void Hide() {
-		visible = false;
-	}
-
-	void Show() {
-		visible = true;
-	}	
-
-	bool GetIsVisible() {
-		return visible;
-	}
-
-	int GetX() {
-		return x;
-	}
-
-	int GetY() {
-		return y;
-	}
-
-	void SetPosition(int x, int y) {
-		this->x = x;
-		this->y = y;
-	}
-
-	int getHeight() {
-		return height;
-	}
-
-	int getWidth() {
-		return width;
-	}
-
-	SDL_Rect GetBoundingBox() {
-		SDL_Rect boundingBox = { x, y, width, height };
-		return boundingBox;
-	}
-};
 
 class Tree{
 	int x, y, width, height;
