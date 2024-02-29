@@ -140,6 +140,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Ally.cpp" />
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Source.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="Util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ally.h" />
     <ClInclude Include="Color.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
