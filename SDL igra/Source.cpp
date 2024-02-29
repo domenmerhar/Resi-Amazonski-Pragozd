@@ -16,8 +16,8 @@
 #include "Player.h"
 #include "Forest.h"
 #include "Enemy.h"
-
 #include "Clock.h"
+#include "Spawner.h"
 
 using namespace std;
 
@@ -39,60 +39,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
-
-class Spawner {
-	float timeToSpawnFire;
-	int framesToSpawnFire;
-	int clockToSpawnFire;
-
-	float timeToRespawnEnemy;
-	int framesToRespawnEnemy;
-	int clockToRespawnEnemy;
-
-	Forest * forest;
-	vector<Enemy*> enemies;
-public:
-	Spawner(float timeToSpawnFire, float timeToRespawnEnemy, Forest *forest, vector<Enemy*> enemies) {
-		Reset(timeToSpawnFire, timeToRespawnEnemy);
-
-		this->forest = forest;
-		this->enemies = enemies;
-	}
-
-	void Reset(float timeToSpawnFire, float timeToRespawnEnemy) {
-		this->timeToSpawnFire = timeToSpawnFire;
-		framesToSpawnFire = timeToSpawnFire * Util::FPS;
-		clockToSpawnFire = 0;
-
-		this->timeToRespawnEnemy = timeToRespawnEnemy;
-		framesToRespawnEnemy = timeToRespawnEnemy * Util::FPS;
-		clockToRespawnEnemy = 0;
-	}
-
-	void Update() {
-		clockToSpawnFire++;
-		if (clockToSpawnFire >= framesToSpawnFire) {
-			clockToSpawnFire = 0;
-
-			bool burnTree = rand() % 2;
-
-			forest->RandomStartDestroying(burnTree);
-		}
-
-		clockToRespawnEnemy++;
-
-		if (clockToRespawnEnemy >= framesToRespawnEnemy) {
-			clockToRespawnEnemy = 0;
-
-			for (Enemy* enemy : enemies) {
-				if (!enemy->GetIsVisible()) {
-					enemy->Show();
-					break;
-				}
-			}
-		}
-	}
-};
 
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
