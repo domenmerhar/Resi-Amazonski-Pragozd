@@ -9,6 +9,7 @@
 #include "Color.h"
 #include "Level.h"
 #include "FrameManager.h"
+#include "Util.h"
 
 using namespace std;
 
@@ -30,47 +31,6 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
-
-class Util {
-public:
-	static const int windowWidth = 832;
-	static const int windowHeight= 640;
-	static const int FPS = 60;
-
-	static bool WithinBoundsX(int x,  int width) {
-		return x >= 0 && x <= windowWidth - width * 2;
-	}
-
-	static bool WithinBoundsY(int y, int height) {
-		return y >= 0 && y <= windowHeight - height;
-	}
-
-	static int ResetX(int x, int width) {
-		if (x < 0) {
-			return 0;
-		}
-		else {
-			return windowWidth - width * 2;
-		}
-	}
-
-	static int ResetY(int y, int height) {
-		if (y < 0) {
-			return 0;
-		}
-		else {
-			return windowHeight - height;
-		}
-	}
-
-	static int GetRandomX(int width) {
-		return rand() % (windowWidth - width * 2);
-	}
-
-	static int GetRandomY(int height) {
-		return rand() % (windowHeight - height * 2);
-	}
-};
 
 class GameObject {
 protected:
