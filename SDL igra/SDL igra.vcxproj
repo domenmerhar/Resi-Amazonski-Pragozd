@@ -141,6 +141,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ally.cpp" />
+    <ClCompile Include="Clock.cpp" />
     <ClCompile Include="Forest.cpp" />
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
@@ -151,12 +152,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Ally.h" />
+    <ClInclude Include="Clock.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="Enemy.h" />
     <ClInclude Include="Forest.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Level.h" />
-    <ClInclude Include="Player.h" />
     <ClInclude Include="Tree.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>

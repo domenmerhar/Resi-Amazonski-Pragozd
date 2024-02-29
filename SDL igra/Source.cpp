@@ -15,6 +15,8 @@
 #include "Ally.h"
 #include "Player.h"
 
+#include "Clock.h"
+
 using namespace std;
 
 Color forestGreen{ 55, 178, 77 };
@@ -53,7 +55,7 @@ class Forest{
 	void FillTrees(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
 		for (int row = 0; row < rows; row++) {
 			for (int column = 0; column < columns; column++) {
-				trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
+				trees[row][column] = new Tree(treeColor.red, treeColor.green, treeColor.blue,
 					renderer, column * tileSize, row * tileSize,
 					tileSize, tileSize, timeToBurn, Util::FPS,
 					treeColor, fireColor, excavationColor);
@@ -419,59 +421,6 @@ public:
 				}
 			}
 		}
-	}
-};
-
-class Clock {
-	int framesToCountdown;
-	int framesRemaining;
-	int FPS;
-
-	bool canCount;
-	bool isCounting;
-
-public:
-	Clock(int seconds, int FPS) {
-		this->FPS = FPS;
-		Reset(seconds);
-	}
-
-	void Reset(int seconds) {
-		framesToCountdown = seconds * FPS;
-		framesRemaining = framesToCountdown;
-		canCount = false;
-		isCounting = false;
-	}
-
-	void Update() {
-		if (canCount) {
-			framesRemaining--;
-
-			if (framesRemaining < 0) {
-				StopCounting();
-			}
-		}
-	}
-
-	bool IsTimeUp() {
-		return framesRemaining <= 0;
-	}
-
-	int GetTimeRemaining() {
-		return framesRemaining / FPS;
-	}
-
-	void StartCounting() {
-		canCount = true;
-		isCounting = true;
-	}
-
-	void StopCounting() {
-		canCount = false;
-	}
-
-	bool GetIsCounting() {
-		return isCounting;
 	}
 };
 
