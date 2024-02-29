@@ -1,19 +1,18 @@
-#include "Forest.h"
 #include <iostream>
-#include <algorithm>
-/*
 
-Color forestGreen{ 55, 178, 77 };
-Color gray{ 134, 142, 150 };
-Color orange{ 251, 139, 35 };
+#include "Forest.h"
+#include "Util.h"   
 
-Color red{ 201, 42, 42 };
-Color pink{ 166, 30, 77 };
+
+Forest::Forest(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
+    this->treeColor = treeColor;
+    FillTrees(renderer, timeToBurn, treeColor, fireColor, excavationColor);
+}
 
 void Forest::FillTrees(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {
-            trees[row][column] = new Tree(forestGreen.red, forestGreen.green, forestGreen.blue,
+            trees[row][column] = new Tree(treeColor.red, treeColor.green, treeColor.blue,
                 renderer, column * tileSize, row * tileSize,
                 tileSize, tileSize, timeToBurn, Util::FPS,
                 treeColor, fireColor, excavationColor);
@@ -69,12 +68,8 @@ void Forest::UpdateTreesInDestruction() {
 }
 
 void Forest::CalculateDestroyedTreesPercentage() {
-    destroyedTreesPercentage = static_cast<float>(destroyedTrees) / totalTrees * 100;
+    destroyedTreesPercentage = (float)destroyedTrees / totalTrees * 100;
     if (destroyedTreesPercentage >= 70) std::cout << "Game over!" << std::endl;
-}
-
-Forest::Forest(SDL_Renderer* renderer, float timeToBurn, Color treeColor, Color fireColor, Color excavationColor) {
-    FillTrees(renderer, timeToBurn, treeColor, fireColor, excavationColor);
 }
 
 void Forest::Render() {
@@ -143,7 +138,7 @@ std::vector<Tree*> Forest::GetBurningTrees() const {
 void Forest::Reset(float timeToBurn) {
     for (int row = 0; row < rows; row++) {
         for (int column = 0; column < columns; column++) {
-            trees[row][column]->Reset(timeToBurn, forestGreen.red, forestGreen.green, forestGreen.blue);
+            trees[row][column]->Reset(timeToBurn, treeColor.red, treeColor.green, treeColor.blue);
         }
     }
 }
@@ -151,5 +146,3 @@ void Forest::Reset(float timeToBurn) {
 float Forest::GetDestroyedTreesPercentage() {
     return destroyedTreesPercentage;
 }
-
-*/
