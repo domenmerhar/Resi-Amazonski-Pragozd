@@ -141,8 +141,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Ally.cpp" />
+    <ClCompile Include="Forest.cpp" />
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Tree.cpp" />
     <ClCompile Include="Util.cpp" />
@@ -150,9 +152,11 @@
   <ItemGroup>
     <ClInclude Include="Ally.h" />
     <ClInclude Include="Color.h" />
+    <ClInclude Include="Forest.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Level.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="Tree.h" />
     <ClInclude Include="Util.h" />
   </ItemGroup>
