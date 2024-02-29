@@ -142,6 +142,7 @@
   <ItemGroup>
     <ClCompile Include="Ally.cpp" />
     <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="Forest.cpp" />
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />

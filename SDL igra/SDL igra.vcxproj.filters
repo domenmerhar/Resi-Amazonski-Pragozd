@@ -42,6 +42,9 @@
     <ClCompile Include="Clock.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="Enemy.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FrameManager.h">
