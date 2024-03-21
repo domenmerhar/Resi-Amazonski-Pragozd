@@ -1,4 +1,5 @@
 #include "Player.h"
+#include "ScoreCounter.h"
 
 void Player::HandleInput() {
     if (visible) {
@@ -44,6 +45,8 @@ void Player::HandleTreeCollision(std::vector<Tree*> treesInDestruction) {
 
             if (!tree->GetIsDestroyed() && SDL_HasIntersection(&playerBoundingBox, &treeBoundingBox)) {
                 tree->Extinguish();
+
+                scoreCounter->AddScore(100);
             }
         }
     }
@@ -56,8 +59,10 @@ void Player::Update() {
     }
 }
 
-Player::Player(const char* imagePathRight, const char* imagePathLeft, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible)
+Player::Player(const char* imagePathRight, const char* imagePathLeft, SDL_Renderer* renderer, int x, int y, int movementSpeed, int width, int height, bool visible, ScoreCounter* scoreCounter)
     : surfaceLeft(nullptr), surfaceRight(nullptr) {
+    this->scoreCounter = scoreCounter;
+
     this->width = width;
     this->height = height;
 
@@ -71,4 +76,5 @@ Player::Player(const char* imagePathRight, const char* imagePathLeft, SDL_Render
     this->y = y;
 
     Reset(movementSpeed, visible);
+
 }

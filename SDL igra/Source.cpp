@@ -145,7 +145,7 @@ class Game
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
-				enemies[i]->HandleCollision(allies, enemies, player);
+				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter);
 				enemies[i]->Move();
 			}
 		}
@@ -240,10 +240,12 @@ public:
 			isRunning = true;
 		}
 
+		scoreCounter = new ScoreCounter();
+
 		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
 		levels[1] = { 2, 0.5, 10, 60, 5, 1, 2 };
 
-		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false);
+		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
 		playerSpawnSquares[1] = new GameObject(200, 200, 200, gameRenderer, Util::windowWidth - 64, 0, 0, 64, 64, true);
 		playerSpawnSquares[2] = new GameObject(200, 200, 200, gameRenderer, 0, Util::windowHeight - 64, 0, 64, 64, true);
@@ -261,8 +263,6 @@ public:
 		enemies[2] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroSmallPathRight, pyroBigPathLeft, pyroBigPathRight);
 
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
-
-		scoreCounter = new ScoreCounter();
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -302,8 +302,6 @@ public:
 		
 		HandleLevels();
 		cout << gameClock->GetTimeRemaining() << endl;
-
-		scoreCounter->AddScore(100);
 		
 		UpdateSpawnSquares();
 	};

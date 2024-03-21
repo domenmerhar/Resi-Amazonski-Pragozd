@@ -161,6 +161,7 @@
     <ClInclude Include="Forest.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="ScoreCounter.h" />
     <ClInclude Include="Level.h" />
     <ClInclude Include="Spawner.h" />
