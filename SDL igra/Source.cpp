@@ -18,6 +18,7 @@
 #include "Enemy.h"
 #include "Clock.h"
 #include "Spawner.h"
+#include "ScoreCounter.h"
 
 using namespace std;
 
@@ -40,6 +41,8 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
+
+
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
 vector<Ally*> allies(3);
@@ -47,6 +50,7 @@ Forest* forest;
 Spawner* spawner;
 vector<Enemy*> enemies(3);
 Clock* gameClock;
+ScoreCounter* scoreCounter;
 
 class Game
 {
@@ -258,6 +262,8 @@ public:
 
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 
+		scoreCounter = new ScoreCounter();
+
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
 		}
@@ -296,6 +302,8 @@ public:
 		
 		HandleLevels();
 		cout << gameClock->GetTimeRemaining() << endl;
+
+		scoreCounter->AddScore(100);
 		
 		UpdateSpawnSquares();
 	};

@@ -147,6 +147,7 @@
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="ScoreCounter.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Spawner.cpp" />
     <ClCompile Include="Tree.cpp" />
@@ -160,6 +161,7 @@
     <ClInclude Include="Forest.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="ScoreCounter.h" />
     <ClInclude Include="Level.h" />
     <ClInclude Include="Spawner.h" />
     <ClInclude Include="Tree.h" />
