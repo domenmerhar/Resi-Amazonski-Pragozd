@@ -20,6 +20,7 @@
 #include "Clock.h"
 #include "Spawner.h"
 #include "ScoreCounter.h"
+#include "Text.h"
 
 using namespace std;
 
@@ -56,59 +57,6 @@ Spawner* spawner;
 vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
-
-class Text {
-	int x;
-	int y;
-
-	SDL_Renderer* renderer;
-	TTF_Font* font;
-	SDL_Texture* texture;
-	SDL_Rect rect;
-
-	bool isVisible;
-
-public:
-	Text(const char*, int, int, SDL_Renderer*, const char*, bool);
-
-	void Render();
-	void ChangeText(const char*);
-};
-
-Text::Text(const char* text, int x, int y, SDL_Renderer* renderer, const char* fontPath, bool isVisible) {
-	this->x = x;
-	this->y = y;
-	this->renderer = renderer;
-	this->font = font;
-
-	this->font = TTF_OpenFont(fontPath, 24);
-	SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
-	texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	rect.x = x;
-	rect.y = y;
-	rect.w = surface->w;
-	rect.h = surface->h;
-
-
-	this->isVisible = isVisible;
-}
-
-void Text::Render() {
-	if (!isVisible) return;
-
-	SDL_RenderCopy(renderer, texture, NULL, &rect);
-}
-
-void Text::ChangeText(const char* text) {
-	SDL_DestroyTexture(texture);
-
-	SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
-	texture = SDL_CreateTextureFromSurface(renderer, surface);
-
-	rect.w = surface->w;
-	rect.h = surface->h;
-}
 
 Text* text;
 
@@ -308,7 +256,7 @@ public:
 		}
 
 
-		text = new Text("60", 100, 100, gameRenderer, robotRegularPath, true);
+		text = new Text("60", 100, 100, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
