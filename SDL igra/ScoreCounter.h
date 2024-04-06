@@ -10,4 +10,6 @@ public:
 	void SaveScore();
 
 	void ResetScore();
+
+	void RenderScore();
 };

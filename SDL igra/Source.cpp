@@ -30,6 +30,10 @@ Color orange{ 251, 139, 35};
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
 
+SDL_Color textColor{ 255, 255, 255, 0 };
+
+TTF_Font* font;
+
 const char* pyroSmallPathRight = "Assets/pyromaniac-right.png";
 const char* pyroSmallPathLeft = "Assets/pyromaniac-left.png";
 
@@ -42,7 +46,7 @@ const char* firefighterPathLeft = "Assets/firefighter-left.png";
 const char* nativePathRight = "Assets/native-right.png";
 const char* nativePathLeft = "Assets/native-left.png";
 
-
+const char* robotRegularPath = "Assets/Font/Roboto-Regular.ttf";
 
 Player* player;
 vector<GameObject*> playerSpawnSquares(5);
@@ -53,12 +57,74 @@ vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
 
+class Text {
+	int x;
+	int y;
+
+	SDL_Renderer* renderer;
+	TTF_Font* font;
+	SDL_Texture* texture;
+	SDL_Rect rect;
+
+	bool isVisible;
+
+public:
+	Text(const char*, int, int, SDL_Renderer*, const char*, bool);
+
+	void Render();
+	void ChangeText(const char*);
+};
+
+Text::Text(const char* text, int x, int y, SDL_Renderer* renderer, const char* fontPath, bool isVisible) {
+	this->x = x;
+	this->y = y;
+	this->renderer = renderer;
+	this->font = font;
+
+	this->font = TTF_OpenFont(fontPath, 24);
+	SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+	rect.x = x;
+	rect.y = y;
+	rect.w = surface->w;
+	rect.h = surface->h;
+
+
+	this->isVisible = isVisible;
+}
+
+void Text::Render() {
+	if (!isVisible) return;
+
+	SDL_RenderCopy(renderer, texture, NULL, &rect);
+}
+
+void Text::ChangeText(const char* text) {
+	SDL_DestroyTexture(texture);
+
+	SDL_Surface* surface = TTF_RenderText_Solid(font, text, textColor);
+	texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+	rect.w = surface->w;
+	rect.h = surface->h;
+}
+
+Text* text;
+
 class Game
 {
 	bool isRunning = false;
 	SDL_Window* window = NULL;
 	SDL_Renderer* gameRenderer = NULL;
 	Level levels[2];
+
+	SDL_Rect Message_rect;
+	TTF_Font* Roboto;
+	SDL_Color White;
+	SDL_Texture* Message;
+
+	SDL_Surface* surfaceMessage;
 
 	bool isPlaying = false;
 
@@ -241,6 +307,9 @@ public:
 			isRunning = true;
 		}
 
+
+		text = new Text("60", 100, 100, gameRenderer, robotRegularPath, true);
+
 		scoreCounter = new ScoreCounter();
 
 		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
@@ -300,6 +369,8 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
+
+		
 		
 		HandleLevels();
 		cout << gameClock->GetTimeRemaining() << endl;
@@ -310,7 +381,7 @@ public:
 	void Render() {
 		SDL_RenderClear(gameRenderer);
 
-		forest->Render();   
+		forest->Render();
 
 		RenderEnemies();
 
@@ -320,6 +391,20 @@ public:
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Render();
 		}
+
+		string str_number = to_string(gameClock->GetTimeRemaining());
+
+		// Get const char* from the string
+		const char* char_ptr = str_number.c_str();
+
+
+		cout << "pointer" << char_ptr << endl;
+
+		text->ChangeText(char_ptr);
+
+		text->Render();
+
+		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
 
 		SDL_RenderPresent(gameRenderer);
 	};
@@ -338,6 +423,8 @@ public:
 
 int main(int argc, char* argv[]) {
 	srand(time(NULL));
+	TTF_Init();
+	font = TTF_OpenFont("Assets/Font/Roboto-Regular.ttf", 24);
 
 	bool isFullscreen = false;
 
@@ -347,7 +434,6 @@ int main(int argc, char* argv[]) {
 	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
 
 	while (game->IsRunning()) {
-
 		frameManager.StartFrame();
 
 		player->HandleInput();
@@ -355,6 +441,7 @@ int main(int argc, char* argv[]) {
 		game->HandleEvents();
 		game->Update();
 		game->Render();
+
 
 		frameManager.EndFrame();
 	}
