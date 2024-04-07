@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdlib> // For rand()
+#include <cstdlib> 
 
 class Util {
 public:
@@ -14,4 +14,5 @@ public:
     static int ResetY(int y, int height);
     static int GetRandomX(int width);
     static int GetRandomY(int height);
+    static const char* IntToCharPointer(int number);
 };

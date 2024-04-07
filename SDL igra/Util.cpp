@@ -1,4 +1,7 @@
+#include <string>
 #include "Util.h"
+
+using namespace std;
 
 const int Util::windowWidth = 832;
 const int Util::windowHeight = 640;
@@ -36,4 +39,11 @@ int Util::GetRandomX(int width) {
 
 int Util::GetRandomY(int height) {
     return rand() % (windowHeight - height * 2);
+}
+
+const char* Util::IntToCharPointer(int number) {
+    string strNumber = to_string(number);
+    char* charPointer = new char[strNumber.length() + 1];
+    strcpy(charPointer, strNumber.c_str());
+    return charPointer;
 }

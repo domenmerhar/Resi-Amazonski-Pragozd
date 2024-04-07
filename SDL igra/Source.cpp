@@ -317,11 +317,8 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
-
-		
 		
 		HandleLevels();
-		cout << gameClock->GetTimeRemaining() << endl;
 		
 		UpdateSpawnSquares();
 	};
@@ -340,16 +337,14 @@ public:
 			playerSpawnSquares[i]->Render();
 		}
 
-		string str_number = to_string(gameClock->GetTimeRemaining());
+		const char* currentScore = Util::IntToCharPointer(gameClock->GetTimeRemaining());
 
-		// Get const char* from the string
-		const char* char_ptr = str_number.c_str();
+		text->ChangeText(
+			currentScore
+		);
 
-
-		cout << "pointer" << char_ptr << endl;
-
-		text->ChangeText(char_ptr);
-
+		delete currentScore;
+		
 		text->Render();
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
