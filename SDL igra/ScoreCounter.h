@@ -12,4 +12,6 @@ public:
 	void ResetScore();
 
 	void RenderScore();
+	
+	int GetScore();
 };

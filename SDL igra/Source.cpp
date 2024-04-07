@@ -24,6 +24,8 @@
 
 using namespace std;
 
+int PADDING_TOP = 10;
+
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
 Color orange{ 251, 139, 35};
@@ -58,7 +60,8 @@ vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
 
-Text* text;
+Text* timeText;
+Text* scoreText;
 
 class Game
 {
@@ -230,6 +233,20 @@ class Game
 		}
 	}
 
+	void UpdateCurrentScore() {
+		const char* currentScore =
+			Util::IntToCharPointer(scoreCounter->GetScore());
+		scoreText->ChangeText(currentScore);
+		delete currentScore;
+	}
+	
+	void UpdateCurrentTime() {
+		const char* currentTime =
+			Util::IntToCharPointer(gameClock->GetTimeRemaining());
+		timeText->ChangeText(currentTime);
+		delete currentTime;
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -255,8 +272,9 @@ public:
 			isRunning = true;
 		}
 
+		timeText = new Text("60", 400, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
+		scoreText = new Text("000", 10, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 
-		text = new Text("60", 100, 100, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
@@ -306,13 +324,17 @@ public:
 	};
 
 	void Update() {
+		if(player->GetIsVisible()) scoreCounter->AddScore(1);
+		UpdateCurrentScore();
+
+		UpdateCurrentTime();
+
 		player->Update();
 		player->HandleTreeCollision(forest->GetBurningTrees());
 
 		forest->Update();
 		
 		HandleAllies(forest->GetBurningTrees());
-
 		HandleEnemies();
 
 		spawner->Update();
@@ -336,16 +358,9 @@ public:
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Render();
 		}
-
-		const char* currentScore = Util::IntToCharPointer(gameClock->GetTimeRemaining());
-
-		text->ChangeText(
-			currentScore
-		);
-
-		delete currentScore;
 		
-		text->Render();
+		timeText->Render();
+		scoreText->Render();
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
 

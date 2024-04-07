@@ -9,7 +9,6 @@ ScoreCounter::ScoreCounter() {
 
 void ScoreCounter::AddScore(int scoreToAdd) {
 	score += scoreToAdd;
-	cout << score << endl;
 }
 
 void ScoreCounter::SaveScore() {
@@ -18,4 +17,8 @@ void ScoreCounter::SaveScore() {
 
 void ScoreCounter::ResetScore() {
 	score = 0;
+}
+
+int ScoreCounter::GetScore() {
+	return score;
 }
