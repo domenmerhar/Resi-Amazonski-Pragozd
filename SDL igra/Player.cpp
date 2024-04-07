@@ -14,12 +14,15 @@ void Player::HandleInput() {
         if (keys[SDL_SCANCODE_UP] || keys[SDL_SCANCODE_W]) {
             dy -= 1;
         }
+
         if (keys[SDL_SCANCODE_DOWN] || keys[SDL_SCANCODE_S]) {
             dy += 1;
         }
+
         if (keys[SDL_SCANCODE_LEFT] || keys[SDL_SCANCODE_A]) {
             dx -= 1;
         }
+
         if (keys[SDL_SCANCODE_RIGHT] || keys[SDL_SCANCODE_D]) {
             dx += 1;
         }
@@ -76,5 +79,4 @@ Player::Player(const char* imagePathRight, const char* imagePathLeft, SDL_Render
     this->y = y;
 
     Reset(movementSpeed, visible);
-
 }

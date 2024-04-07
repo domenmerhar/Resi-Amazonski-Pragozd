@@ -60,8 +60,8 @@ vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
 
-Text* timeText;
-Text* scoreText;
+Text* timeText, *scoreText, *pauseText;
+
 
 class Game
 {
@@ -78,6 +78,11 @@ class Game
 	SDL_Surface* surfaceMessage;
 
 	bool isPlaying = false;
+	bool isPaused = false;
+
+	int escapeDelay = 20;
+	int escapeDelayCounter = 0;
+	bool canEscape = true;
 
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
@@ -85,6 +90,7 @@ class Game
 		}
 
 		gameClock->StartCounting();
+		isPlaying = true;
 	}
 
 	void ShowSpawnSquares() {
@@ -247,6 +253,33 @@ class Game
 		delete currentTime;
 	}
 
+	void HandlePause() {
+		SDL_PumpEvents();
+		const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+		escapeDelayCounter++;
+
+		if (escapeDelayCounter >= escapeDelay) {
+			canEscape = true;
+			escapeDelayCounter = 0;
+		}
+
+		if (!canEscape || !keys[SDL_SCANCODE_ESCAPE]) return;
+
+		if (isPlaying) {
+			gameClock->StopCounting();
+			isPlaying =  false;
+			isPaused = true;
+			canEscape = false;
+		}
+		else if (!isPlaying) {
+			gameClock->StartCounting();
+			isPlaying = isPaused = true;
+			isPaused = false;
+			canEscape = false;
+		}
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -274,7 +307,7 @@ public:
 
 		timeText = new Text("60", 400, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 		scoreText = new Text("000", 10, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
-
+		pauseText = new Text("PAUSE", width / 2 - 40, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
@@ -324,7 +357,14 @@ public:
 	};
 
 	void Update() {
+		HandleLevels();
+		UpdateSpawnSquares();
+
+		HandlePause();
+		if (!isPlaying) return;
+
 		if(player->GetIsVisible()) scoreCounter->AddScore(1);
+
 		UpdateCurrentScore();
 
 		UpdateCurrentTime();
@@ -339,10 +379,9 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
-		
-		HandleLevels();
-		
-		UpdateSpawnSquares();
+
+		cout << isPlaying << endl;
+
 	};
 
 	void Render() {
@@ -361,9 +400,9 @@ public:
 		
 		timeText->Render();
 		scoreText->Render();
+		if(isPaused) pauseText->Render();
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
-
 		SDL_RenderPresent(gameRenderer);
 	};
 
