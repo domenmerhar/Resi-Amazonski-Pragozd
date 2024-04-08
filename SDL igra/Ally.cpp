@@ -96,8 +96,8 @@ bool Ally::IsTreeInRange(Tree* tree, int range) {
 }
 
 void Ally::SetTarget(int x, int y, int width, int height) {
-    targetX = x + width / 2;
-    targetY = y + height / 2;
+    targetX = x - width / 2;
+    targetY = y - height / 2;
 }
 
 void Ally::HandleTreeCollision(std::vector<Tree*> treesInDestruction) {
