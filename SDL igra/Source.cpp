@@ -195,6 +195,7 @@ class Game
 	void HandleLevels() {
 		if (!player->GetIsVisible() && gameClock->GetIsCounting()) {
 			ResetGame(levels[0]);
+			scoreCounter->ResetScore();
 		}
 
 		if (gameClock->GetTimeRemaining() <= 0) {
@@ -202,6 +203,7 @@ class Game
 				gameClock->StopCounting();
 				cout << "Game over!" << endl;
 				ResetGame(levels[0]);
+				scoreCounter->ResetScore();
 			}
 			else {
 				ResetGame(levels[1]);
