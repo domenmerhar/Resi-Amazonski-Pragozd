@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cmath>
 #include <string>
+#include <fstream>
 
 #include "Color.h"
 #include "Level.h"
@@ -21,6 +22,7 @@
 #include "Spawner.h"
 #include "ScoreCounter.h"
 #include "Text.h"
+#include "Score.h"
 
 using namespace std;
 
@@ -62,6 +64,22 @@ ScoreCounter* scoreCounter;
 
 Text* timeText, *scoreText, *pauseText;
 
+
+void PrintScore() {
+	ifstream file("Assets/Score/scores.bin", ios::binary);
+
+	if (!file.is_open()) {
+		cout << "ScoreSaver: File not found!" << endl;
+		return;
+	}
+
+	struct Score curr;
+	while (file.read((char*)&curr, sizeof(curr))) {
+		cout << curr.score << " " << curr.name << endl;
+	}
+
+	file.close();
+}
 
 class Game
 {
@@ -381,9 +399,6 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
-
-		cout << isPlaying << endl;
-
 	};
 
 	void Render() {
@@ -420,6 +435,8 @@ public:
 	}
 };
 
+char name[21] = "Jaka";
+
 int main(int argc, char* argv[]) {
 	srand(time(NULL));
 	TTF_Init();
@@ -431,6 +448,7 @@ int main(int argc, char* argv[]) {
 
 	Game *game = new Game();
 	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
+	PrintScore();
 
 	while (game->IsRunning()) {
 		frameManager.StartFrame();

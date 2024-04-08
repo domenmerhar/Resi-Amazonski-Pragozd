@@ -15,4 +15,5 @@ public:
     static int GetRandomX(int width);
     static int GetRandomY(int height);
     static const char* IntToCharPointer(int number);
+    static void SaveScore(int score, char name[]);
 };

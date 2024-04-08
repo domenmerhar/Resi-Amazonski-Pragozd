@@ -1,5 +1,9 @@
 #include <string>
+#include <fstream>
+#include <iostream>
+
 #include "Util.h"
+#include "Score.h"
 
 using namespace std;
 
@@ -46,4 +50,43 @@ const char* Util::IntToCharPointer(int number) {
     char* charPointer = new char[strNumber.length() + 1];
     strcpy(charPointer, strNumber.c_str());
     return charPointer;
+}
+
+void Util::SaveScore(int score, char name[]) {
+	ifstream original("Assets/Score/scores.bin", ios::binary);
+
+	if (!original.is_open()) {
+		cout << "ScoreSaver: File not found!" << endl;
+		return;
+	}
+
+	struct Score scoreToSave;
+	scoreToSave.score = score;
+	strcpy(scoreToSave.name, name);
+
+	ofstream copy("Assets/Score/tmp.bin", ios::binary);
+	struct Score curr;
+	bool isSaved = false;
+
+	while (original.read((char*)&curr, sizeof(curr)))
+	{
+		if (!isSaved && scoreToSave.score > curr.score) {
+			copy.write((char*)&scoreToSave, sizeof(scoreToSave));
+			isSaved = true;
+		}
+
+		copy.write((char*)&curr, sizeof(curr));
+	}
+
+	if (!isSaved && scoreToSave.score > curr.score)
+		copy.write((char*)&scoreToSave, sizeof(scoreToSave));
+
+	original.close();;
+	copy.close();
+
+	remove("Assets/Score/scores.bin");
+
+	if (rename("Assets/Score/tmp.bin", "Assets/Score/scores.bin") != 0) {
+		cout << "Error renaming file: " << strerror(errno) << endl;
+	}
 }
