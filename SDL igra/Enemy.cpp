@@ -108,7 +108,7 @@ bool Enemy::GetIsBig() {
     return isBig;
 }
 
-void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter) {
+void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter, char name[]) {
     if (!visible) return;
 
     boundingBox = GetBoundingBox();
@@ -159,5 +159,6 @@ void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemi
 
     if (isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
         player->Hide();
+        Util::SaveScore(scoreCounter->GetScore(), name);
     }
 }

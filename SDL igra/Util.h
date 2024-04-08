@@ -4,6 +4,8 @@
 
 class Util {
 public:
+    static char playerName[21];
+
     static const int windowWidth;
     static const int windowHeight;
     static const int FPS;

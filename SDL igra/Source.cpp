@@ -64,6 +64,7 @@ ScoreCounter* scoreCounter;
 
 Text* timeText, *scoreText, *pauseText;
 
+char testName[21] = "Jože";
 
 void PrintScore() {
 	ifstream file("Assets/Score/scores.bin", ios::binary);
@@ -187,7 +188,7 @@ class Game
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
-				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter);
+				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter, testName);
 				enemies[i]->Move();
 			}
 		}
@@ -213,6 +214,7 @@ class Game
 	void HandleLevels() {
 		if (!player->GetIsVisible() && gameClock->GetIsCounting()) {
 			ResetGame(levels[0]);
+			Util::SaveScore(scoreCounter->GetScore(), testName);
 			scoreCounter->ResetScore();
 		}
 
@@ -220,8 +222,9 @@ class Game
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
 				gameClock->StopCounting();
 				cout << "Game over!" << endl;
-				ResetGame(levels[0]);
+				Util::SaveScore(scoreCounter->GetScore(), testName);
 				scoreCounter->ResetScore();
+				ResetGame(levels[0]);
 			}
 			else {
 				ResetGame(levels[1]);
@@ -358,7 +361,6 @@ public:
 		}
 
 		gameClock = new Clock(levels[0].time, Util::FPS);
-		
 	}
 
 	void HandleEvents() {
@@ -399,6 +401,8 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
+
+		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
 	};
 
 	void Render() {
@@ -434,8 +438,6 @@ public:
 		return isRunning;
 	}
 };
-
-char name[21] = "Jaka";
 
 int main(int argc, char* argv[]) {
 	srand(time(NULL));
