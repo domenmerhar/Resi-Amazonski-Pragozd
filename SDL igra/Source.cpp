@@ -66,6 +66,8 @@ Text* timeText, *scoreText, *pauseText;
 
 char testName[21] = "Jože";
 
+
+
 class Game
 {
 	bool isRunning = false;

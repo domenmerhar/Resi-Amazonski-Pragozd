@@ -91,7 +91,7 @@ void Util::SaveScore(int score, char name[]) {
 	}
 }
 
-void PrintScore() {
+void Util::PrintScore() {
 	ifstream file("Assets/Score/scores.bin", ios::binary);
 
 	if (!file.is_open()) {
