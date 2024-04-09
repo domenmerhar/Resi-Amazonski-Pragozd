@@ -5,7 +5,6 @@
 #include <cmath>
 #include <SDL.h>
 
-
 void Enemy::GenerateRandomTarget() {
     targetX = Util::GetRandomX(width);
     targetY = Util::GetRandomY(height);
@@ -158,7 +157,7 @@ void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemi
     if (!player->GetIsVisible() || invinciblePlayer) return;
 
     if (isBig && SDL_HasIntersection(&playerBoundingBox, &boundingBox)) {
-        player->Hide();
-        Util::SaveScore(scoreCounter->GetScore(), name);
+       player->Hide();
+       Util::SaveScore(scoreCounter->GetScore(), name);
     }
 }

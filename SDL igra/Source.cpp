@@ -367,8 +367,10 @@ public:
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
-			if (event.type == SDL_QUIT) {
+			if (event.type == SDL_QUIT && isRunning) {
 				isRunning = false;
+
+				if(scoreCounter->GetScore() > 0) Util::SaveScore(scoreCounter->GetScore(), testName);
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
