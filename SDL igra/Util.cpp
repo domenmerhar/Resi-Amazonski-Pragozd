@@ -90,3 +90,19 @@ void Util::SaveScore(int score, char name[]) {
 		cout << "Error renaming file: " << strerror(errno) << endl;
 	}
 }
+
+void PrintScore() {
+	ifstream file("Assets/Score/scores.bin", ios::binary);
+
+	if (!file.is_open()) {
+		cout << "ScoreSaver: File not found!" << endl;
+		return;
+	}
+
+	struct Score curr;
+	while (file.read((char*)&curr, sizeof(curr))) {
+		cout << curr.score << " " << curr.name << endl;
+	}
+
+	file.close();
+}

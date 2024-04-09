@@ -66,22 +66,6 @@ Text* timeText, *scoreText, *pauseText;
 
 char testName[21] = "Jože";
 
-void PrintScore() {
-	ifstream file("Assets/Score/scores.bin", ios::binary);
-
-	if (!file.is_open()) {
-		cout << "ScoreSaver: File not found!" << endl;
-		return;
-	}
-
-	struct Score curr;
-	while (file.read((char*)&curr, sizeof(curr))) {
-		cout << curr.score << " " << curr.name << endl;
-	}
-
-	file.close();
-}
-
 class Game
 {
 	bool isRunning = false;
@@ -452,7 +436,7 @@ int main(int argc, char* argv[]) {
 
 	Game *game = new Game();
 	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
-	PrintScore();
+	Util::PrintScore();
 
 	while (game->IsRunning()) {
 		frameManager.StartFrame();
