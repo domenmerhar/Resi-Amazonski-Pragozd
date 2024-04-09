@@ -66,7 +66,60 @@ Text* timeText, *scoreText, *pauseText;
 
 char testName[21] = "Jože";
 
+struct Position {
+	int x, y;
+};
 
+class ReplayManager {
+	ofstream outputFile;
+	ifstream inputFile;
+
+	const char* pathOriginal = "Assets/Replay/scores.bin";
+	const char* pathTmp = "Assets/Replay/scoresTmp.bin";
+
+
+public:
+	void SavePosition(struct Position positionToSave) {
+		if(inputFile.is_open()) inputFile.close();
+
+		outputFile.open(pathTmp, ios::binary | ios::app);
+
+		if (!outputFile.is_open()) {
+			cout << "ReplayManager: File not found!" << endl;
+			return;
+		}
+
+		outputFile.write((char*)&positionToSave, sizeof(positionToSave));
+		outputFile.close();
+	}
+
+	void ClearFile() {
+		outputFile.open(pathTmp, ios::binary | ios::trunc);
+		outputFile.close();
+	}
+
+	struct Position GetPosition() {
+		if (outputFile.is_open()) outputFile.close();
+
+		struct Position position;
+		position.x = -1;
+		position.y = -1;
+
+		if(!inputFile.is_open()) inputFile.open(pathTmp, ios::binary);
+
+		if (!inputFile.is_open()) {
+			cout << "ReplayManager: File not open!" << endl;
+			return position;
+		}
+
+		if(!inputFile.read((char*)&position, sizeof(position)))
+			cout << "ReplayManager: can't read file!" << endl;
+
+		return position;
+	}
+};
+
+ReplayManager *replayManager;
 
 class Game
 {
@@ -207,7 +260,6 @@ class Game
 		if (gameClock->GetTimeRemaining() <= 0) {
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
 				gameClock->StopCounting();
-				cout << "Game over!" << endl;
 				Util::SaveScore(scoreCounter->GetScore(), testName);
 				scoreCounter->ResetScore();
 				ResetGame(levels[0]);
@@ -341,6 +393,7 @@ public:
 		enemies[2] = new Enemy(gameRenderer, levels[0].enemySpeed, 32, 32, forest, pyroSmallPathLeft, pyroSmallPathRight, pyroBigPathLeft, pyroBigPathRight);
 
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
+		replayManager = new ReplayManager();
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -374,6 +427,9 @@ public:
 		if (!isPlaying) return;
 
 		if(player->GetIsVisible()) scoreCounter->AddScore(1);
+
+		//struct Position currrentPosition = replayManager->GetPosition();
+		//player->SetPosition(currrentPosition.x, currrentPosition.y);
 
 		UpdateCurrentScore();
 
