@@ -68,7 +68,10 @@ void Util::SaveScore(int score, char name[]) {
 	struct Score curr;
 	bool isSaved = false;
 
-	while (original.read((char*)&curr, sizeof(curr)))
+
+	int count = 0;
+
+	while (original.read((char*)&curr, sizeof(curr)) && count < 5)
 	{
 		if (!isSaved && scoreToSave.score > curr.score) {
 			copy.write((char*)&scoreToSave, sizeof(scoreToSave));
@@ -76,6 +79,8 @@ void Util::SaveScore(int score, char name[]) {
 		}
 
 		copy.write((char*)&curr, sizeof(curr));
+
+		count++;
 	}
 
 	if (!isSaved && scoreToSave.score > curr.score)
