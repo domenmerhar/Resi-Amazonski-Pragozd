@@ -67,8 +67,10 @@ ScoreCounter* scoreCounter;
 
 Text* timeText, *scoreText, *pauseText, *replayText;
 
-GameObject* menuBackground;
 Text* menuPlay, *menuLeaderboard, *menuExit;
+
+Text *leaderboardBackText;
+vector<Text*> leaderboardTexts(5);
 
 Text* inputLabel, *inputText;
 
@@ -98,7 +100,7 @@ class Game
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
-	int locationNumber = 2;
+	int locationNumber = 3;
 	// 0 - main menu
 	// 1 - input
 	// 2 - game
@@ -373,7 +375,6 @@ class Game
 	}
 
 	void RenderMainMenu() {
-		menuBackground->Render();
 		menuPlay->Render();
 		menuLeaderboard->Render();
 		menuExit->Render();
@@ -391,6 +392,51 @@ class Game
 		else if(menuExit->IsColliding(x, y)) cout << "Izhod" << endl;
 	}
 
+	void InitLeaderboard() {
+		leaderboardBackText = new Text("Nazaj", PADDING_TOP, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
+
+		ifstream original("Assets/Score/scores.bin", ios::binary);
+
+		if (!original.is_open()) {
+			leaderboardTexts[0] = new Text("Ni rezultatov", 370, 180, gameRenderer, robotRegularPath, true, textColor);
+
+			for (int i = 1; i < leaderboardTexts.size(); i++) {
+				leaderboardTexts[i] = nullptr;
+			}
+			return;
+		}
+			
+		int i = 0;
+		struct Score curr;
+
+		while (original.read((char*)& curr, sizeof(curr)))
+		{
+			//TODO
+			//ADD TEXT TO LEADERBOARD
+
+			const char* scoreString = Util::IntToCharPointer(curr.score);
+
+			leaderboardTexts[i] = new Text(curr.name, 370, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
+			i++;
+		}
+
+		for (; i < leaderboardTexts.size(); i++) {
+			leaderboardTexts[i] = nullptr;
+		}
+
+		original.close();
+	}
+
+	void RenderLeaderBoard(){
+		leaderboardBackText->Render();
+		for (int i = 0; i < leaderboardTexts.size(); i++) {
+			if(leaderboardTexts[i] != nullptr) leaderboardTexts[i]->Render();
+		}
+	}
+	
+	void HandleLeaderBoard(int x, int y) {
+		if (leaderboardBackText->IsColliding(x, y)) cout << "Nazaj" << endl;
+	}
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -447,10 +493,8 @@ public:
 		replayManager = new ReplayManager();
 		replayManager->ClearFile();
 
-		menuBackground = new GameObject(forestGreen.red, forestGreen.green, forestGreen.blue, gameRenderer, 1, 600, 0, 800, 50, true);
-		menuBackground->Update();
-
 		InitMainMenu();
+		InitLeaderboard();
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -472,6 +516,7 @@ public:
 				if (event.button.button == SDL_BUTTON_LEFT) {
 					if(locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
 					else if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
+					else if (locationNumber == 3) HandleLeaderBoard(event.button.x, event.button.y);
 				}
 			}
 		}
@@ -512,7 +557,7 @@ public:
 				RenderGameplay();
 				break;
 			case 3:
-				break;
+				RenderLeaderBoard();
 		}
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
@@ -542,7 +587,6 @@ int main(int argc, char* argv[]) {
 
 	Game *game = new Game();
 	game->Init("Resi Amazonski pragozd", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, Util::windowWidth, Util::windowHeight, isFullscreen);	
-	Util::PrintScore();
 
 	while (game->IsRunning()) {
 		frameManager.StartFrame();
