@@ -98,6 +98,12 @@ class Game
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
+	int locationNumber = 2;
+	// 0 - main menu
+	// 1 - input
+	// 2 - game
+	// 3 - leaderboard
+
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Hide();
@@ -146,7 +152,7 @@ class Game
 			ally->Render();
 		}
 	}
-	
+
 	void RenderAllies() {
 		if (allies[0]->GetIsVisible()) {
 			for (int i = 0; i < allies.size(); i++) {
@@ -169,8 +175,8 @@ class Game
 				allies[i]->Move();
 			}
 		}
-	}	
-	
+	}
+
 	void RenderEnemies() {
 		if (enemies[0]->GetIsVisible()) {
 			for (int i = 0; i < enemies.size(); i++) {
@@ -179,7 +185,7 @@ class Game
 		}
 	}
 
-	void HandleEnemies(){
+	void HandleEnemies() {
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
@@ -265,7 +271,7 @@ class Game
 		scoreText->ChangeText(currentScore);
 		delete currentScore;
 	}
-	
+
 	void UpdateCurrentTime() {
 		const char* currentTime =
 			Util::IntToCharPointer(gameClock->GetTimeRemaining());
@@ -287,7 +293,7 @@ class Game
 
 		if (isPlaying) {
 			gameClock->StopCounting();
-			isPlaying =  false;
+			isPlaying = false;
 			isPaused = true;
 			canEscape = false;
 		}
@@ -300,10 +306,70 @@ class Game
 	}
 
 	void HandleReplay() {
+
 		const Uint8* keys = SDL_GetKeyboardState(NULL);
 
 		if (replayManager->GetIsReplaying() || isPaused || !isPlaying || !keys[SDL_SCANCODE_R]) return;
 		replayManager->SetIsReplaying(true);
+	}
+
+	void UpdateGameplay() {
+		HandleLevels();
+		UpdateSpawnSquares();
+
+		HandleReplay();
+		if (replayManager->GetIsReplaying()) {
+			struct Position position = replayManager->GetPosition();
+			if (position.x == -1 && position.y == -1) {
+				replayManager->SetIsReplaying(false);
+				return;
+			}
+
+			player->SetPosition(position.x, position.y);
+			player->Update();
+			return;
+		}
+
+		HandlePause();
+		if (!isPlaying) return;
+
+		if(player->GetIsVisible()) scoreCounter->AddScore(1);
+
+		UpdateCurrentScore();
+
+		UpdateCurrentTime();
+
+		player->Update();
+		player->HandleTreeCollision(forest->GetBurningTrees());
+
+		forest->Update();
+		
+		HandleAllies(forest->GetBurningTrees());
+		HandleEnemies();
+
+		spawner->Update();
+		gameClock->Update();
+		if (!isPaused && !replayManager->GetIsReplaying()) replayManager->SavePosition({ player->GetX(), player->GetY() });
+		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
+
+	}
+
+	void RenderGameplay() {
+		forest->Render();
+
+		RenderEnemies();
+		RenderAllies();
+
+		player->Render();
+		for (int i = 0; i < playerSpawnSquares.size(); i++) {
+			playerSpawnSquares[i]->Render();
+		}
+		
+		timeText->Render();
+		scoreText->Render();
+
+		if(isPaused) pauseText->Render();
+		if (replayManager->GetIsReplaying()) replayText->Render();
 	}
 
 	void RenderMainMenu() {
@@ -404,75 +470,50 @@ public:
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					if(playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
-					else HandleMainMenu(event.button.x, event.button.y);
+					if(locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
+					else if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
 				}
 			}
 		}
 	};
 
 	void Update() {
-		HandleLevels();
-		UpdateSpawnSquares();
-
-		HandleReplay();
-		if (replayManager->GetIsReplaying()) {
-			struct Position position = replayManager->GetPosition();
-			if (position.x == -1 && position.y == -1) {
-				replayManager->SetIsReplaying(false);
-				return;
-			}
-
-			player->SetPosition(position.x, position.y);
-			player->Update();
-			return;
+		switch (locationNumber) {
+			// 0 - main menu
+			// 1 - input
+			// 2 - game
+			// 3 - leaderboard
+			case 0:
+				break;
+			case 1:
+				break;
+			case 2:
+				UpdateGameplay();
+				break;
+			case 3:
+				break;
 		}
-
-		HandlePause();
-		if (!isPlaying) return;
-
-		if(player->GetIsVisible()) scoreCounter->AddScore(1);
-
-		UpdateCurrentScore();
-
-		UpdateCurrentTime();
-
-		player->Update();
-		player->HandleTreeCollision(forest->GetBurningTrees());
-
-		forest->Update();
-		
-		HandleAllies(forest->GetBurningTrees());
-		HandleEnemies();
-
-		spawner->Update();
-		gameClock->Update();
-		if (!isPaused && !replayManager->GetIsReplaying()) replayManager->SavePosition({ player->GetX(), player->GetY() });
-
-		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
-	};
+		};
 
 	void Render() {
 		SDL_RenderClear(gameRenderer);
-
-		forest->Render();
-
-		RenderEnemies();
-
-		RenderAllies();
-
-		player->Render();
-		for (int i = 0; i < playerSpawnSquares.size(); i++) {
-			playerSpawnSquares[i]->Render();
-		}
 		
-		timeText->Render();
-		scoreText->Render();
-
-		if(isPaused) pauseText->Render();
-		if (replayManager->GetIsReplaying()) replayText->Render();
-
-		RenderMainMenu();
+		switch (locationNumber) {
+			// 0 - main menu
+			// 1 - input
+			// 2 - game
+			// 3 - leaderboard
+			case 0:
+				RenderMainMenu();
+				break;
+			case 1:
+				break;
+			case 2:
+				RenderGameplay();
+				break;
+			case 3:
+				break;
+		}
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
 		SDL_RenderPresent(gameRenderer);
