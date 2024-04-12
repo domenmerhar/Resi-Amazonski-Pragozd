@@ -23,6 +23,7 @@
 #include "ScoreCounter.h"
 #include "Text.h"
 #include "Score.h"
+#include "Position.h"
 
 using namespace std;
 
@@ -65,10 +66,6 @@ ScoreCounter* scoreCounter;
 Text* timeText, *scoreText, *pauseText, *replayText;
 
 char testName[21] = "Jože";
-
-struct Position {
-	int x, y;
-};
 
 class ReplayManager {
 	ofstream outputFile;

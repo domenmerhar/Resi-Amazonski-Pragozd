@@ -162,6 +162,7 @@
     <ClInclude Include="Forest.h" />
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
+    <ClInclude Include="Position.h" />
     <ClInclude Include="Score.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="Player.h" />
