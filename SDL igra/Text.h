@@ -18,5 +18,7 @@ public:
 
 	void Render();
 	void ChangeText(const char*);
+	SDL_Rect GetRect();
+	bool IsColliding(int x, int y);
 };
 

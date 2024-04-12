@@ -72,7 +72,7 @@ Text* menuPlay, *menuLeaderboard, *menuExit;
 
 Text* inputLabel, *inputText;
 
-char testName[21] = "Jože";
+char testName[21] = "Jožica";
 
 ReplayManager *replayManager;
 
@@ -319,6 +319,12 @@ class Game
 		menuExit = new Text("Izhod", 375, 360, gameRenderer, robotRegularPath, true, textColor);
 	}
 
+	void HandleMainMenu(int x, int y) {
+		if (menuPlay->IsColliding(x, y)) cout << "Zacni igro" << endl;
+		else if(menuLeaderboard->IsColliding(x, y)) cout << "Lestvica" << endl;
+		else if(menuExit->IsColliding(x, y)) cout << "Izhod" << endl;
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -375,7 +381,7 @@ public:
 		replayManager = new ReplayManager();
 		replayManager->ClearFile();
 
-		menuBackground = new GameObject(forestGreen.red, forestGreen.green, forestGreen.blue, gameRenderer, 1, 600, 0, 800, 800, true);
+		menuBackground = new GameObject(forestGreen.red, forestGreen.green, forestGreen.blue, gameRenderer, 1, 600, 0, 800, 50, true);
 		menuBackground->Update();
 
 		InitMainMenu();
@@ -398,7 +404,8 @@ public:
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					HandleEventsSpawnSquares(event.button.x, event.button.y);
+					if(playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
+					else HandleMainMenu(event.button.x, event.button.y);
 				}
 			}
 		}

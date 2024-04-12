@@ -37,3 +37,11 @@ void Text::ChangeText(const char* text) {
 	rect.w = surface->w;
 	rect.h = surface->h;
 }
+
+SDL_Rect Text::GetRect() {
+	return rect;
+}
+
+bool Text::IsColliding(int x, int y) {
+	return x >= rect.x && x <= rect.x + rect.w && y >= rect.y && y <= rect.y + rect.h;
+}
