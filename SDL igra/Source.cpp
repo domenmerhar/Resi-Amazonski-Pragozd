@@ -62,7 +62,7 @@ vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
 
-Text* timeText, *scoreText, *pauseText;
+Text* timeText, *scoreText, *pauseText, *replayText;
 
 char testName[21] = "Jože";
 
@@ -77,6 +77,7 @@ class ReplayManager {
 	const char* pathOriginal = "Assets/Replay/scores.bin";
 	const char* pathTmp = "Assets/Replay/scoresTmp.bin";
 
+	bool isReplaying = false;
 
 public:
 	void SavePosition(struct Position positionToSave) {
@@ -116,6 +117,14 @@ public:
 			cout << "ReplayManager: can't read file!" << endl;
 
 		return position;
+	}
+
+	void SetIsReplaying(bool toSet) {
+		isReplaying = toSet;
+	}
+
+	bool GetIsReplaying() {
+		return isReplaying;
 	}
 };
 
@@ -238,6 +247,9 @@ class Game
 		forest->Reset(levelToSet.timeToBurn);
 		spawner->Reset(levelToSet.timeToSpawnDestruction, levelToSet.timeToSpawnEnemy);
 		player->Reset(levelToSet.playerSpeed, false);
+		replayManager->ClearFile();
+
+		isPlaying = false;
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Reset(levelToSet.allySpeed);
@@ -315,7 +327,6 @@ class Game
 	}
 
 	void HandlePause() {
-		SDL_PumpEvents();
 		const Uint8* keys = SDL_GetKeyboardState(NULL);
 
 		escapeDelayCounter++;
@@ -339,6 +350,13 @@ class Game
 			isPaused = false;
 			canEscape = false;
 		}
+	}
+
+	void HandleReplay() {
+		const Uint8* keys = SDL_GetKeyboardState(NULL);
+
+		if (replayManager->GetIsReplaying() || isPaused || !isPlaying || !keys[SDL_SCANCODE_R]) return;
+		replayManager->SetIsReplaying(true);
 	}
 
 public:
@@ -369,11 +387,12 @@ public:
 		timeText = new Text("60", 400, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 		scoreText = new Text("000", 10, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 		pauseText = new Text("PAUSE", width / 2 - 40, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
+		replayText = new Text("REPLAYING", width / 2 - 60, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
-		levels[0] = { 1, 1, 15, 60, 5, 1, 1 };
-		levels[1] = { 2, 0.5, 10, 60, 5, 1, 2 };
+		levels[0] = { 1, 1, 15, 10, 5, 1, 1 };
+		levels[1] = { 2, 0.5, 10, 10, 5, 1, 2 };
 
 		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
@@ -394,6 +413,7 @@ public:
 
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 		replayManager = new ReplayManager();
+		replayManager->ClearFile();
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -423,13 +443,23 @@ public:
 		HandleLevels();
 		UpdateSpawnSquares();
 
+		HandleReplay();
+		if (replayManager->GetIsReplaying()) {
+			struct Position position = replayManager->GetPosition();
+			if (position.x == -1 && position.y == -1) {
+				replayManager->SetIsReplaying(false);
+				return;
+			}
+
+			player->SetPosition(position.x, position.y);
+			player->Update();
+			return;
+		}
+
 		HandlePause();
 		if (!isPlaying) return;
 
 		if(player->GetIsVisible()) scoreCounter->AddScore(1);
-
-		//struct Position currrentPosition = replayManager->GetPosition();
-		//player->SetPosition(currrentPosition.x, currrentPosition.y);
 
 		UpdateCurrentScore();
 
@@ -445,8 +475,10 @@ public:
 
 		spawner->Update();
 		gameClock->Update();
+		if (!isPaused && !replayManager->GetIsReplaying()) replayManager->SavePosition({ player->GetX(), player->GetY() });
 
 		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
+		cout << replayManager->GetIsReplaying() << endl;
 	};
 
 	void Render() {
@@ -466,6 +498,7 @@ public:
 		timeText->Render();
 		scoreText->Render();
 		if(isPaused) pauseText->Render();
+		if (replayManager->GetIsReplaying()) replayText->Render();
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
 		SDL_RenderPresent(gameRenderer);
