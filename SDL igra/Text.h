@@ -14,7 +14,7 @@ class Text {
 	SDL_Color textColor;
 
 public:
-	Text(const char*, int, int, SDL_Renderer*, const char*, bool, SDL_Color);
+	Text(const char* text, int x, int y, SDL_Renderer* renderer, const char* fontPath, bool isVisible, SDL_Color textColor);
 
 	void Render();
 	void ChangeText(const char*);

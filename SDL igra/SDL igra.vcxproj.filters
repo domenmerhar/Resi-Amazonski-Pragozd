@@ -54,6 +54,9 @@
     <ClCompile Include="Text.cpp">
       <Filter>Resource Files</Filter>
     </ClCompile>
+    <ClCompile Include="ReplayManager.cpp">
+      <Filter>Resource Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FrameManager.h">
@@ -102,6 +105,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Position.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ReplayManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

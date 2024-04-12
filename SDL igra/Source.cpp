@@ -29,6 +29,7 @@
 using namespace std;
 
 int PADDING_TOP = 10;
+int TIME_PER_LEVEL = 60;
 
 Color forestGreen{ 55, 178, 77 };
 Color gray{ 134, 142, 150 };
@@ -66,66 +67,13 @@ ScoreCounter* scoreCounter;
 
 Text* timeText, *scoreText, *pauseText, *replayText;
 
+GameObject* menuBackground;
+Text* menuPlay, *menuLeaderboard, *menuExit;
+
+Text* inputLabel, *inputText;
+
 char testName[21] = "Jože";
-/*
-class ReplayManager {
-	ofstream outputFile;
-	ifstream inputFile;
 
-	const char* pathOriginal = "Assets/Replay/scores.bin";
-	const char* pathTmp = "Assets/Replay/scoresTmp.bin";
-
-	bool isReplaying = false;
-
-public:
-	void SavePosition(struct Position positionToSave) {
-		if(inputFile.is_open()) inputFile.close();
-
-		outputFile.open(pathTmp, ios::binary | ios::app);
-
-		if (!outputFile.is_open()) {
-			cout << "ReplayManager: File not found!" << endl;
-			return;
-		}
-
-		outputFile.write((char*)&positionToSave, sizeof(positionToSave));
-		outputFile.close();
-	}
-
-	void ClearFile() {
-		outputFile.open(pathTmp, ios::binary | ios::trunc);
-		outputFile.close();
-	}
-
-	struct Position GetPosition() {
-		if (outputFile.is_open()) outputFile.close();
-
-		struct Position position;
-		position.x = -1;
-		position.y = -1;
-
-		if(!inputFile.is_open()) inputFile.open(pathTmp, ios::binary);
-
-		if (!inputFile.is_open()) {
-			cout << "ReplayManager: File not open!" << endl;
-			return position;
-		}
-
-		if(!inputFile.read((char*)&position, sizeof(position)))
-			cout << "ReplayManager: can't read file!" << endl;
-
-		return position;
-	}
-
-	void SetIsReplaying(bool toSet) {
-		isReplaying = toSet;
-	}
-
-	bool GetIsReplaying() {
-		return isReplaying;
-	}
-};
-*/
 ReplayManager *replayManager;
 
 class Game
@@ -146,6 +94,7 @@ class Game
 	bool isPaused = false;
 
 	int escapeDelay = 20;
+
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
@@ -357,6 +306,19 @@ class Game
 		replayManager->SetIsReplaying(true);
 	}
 
+	void RenderMainMenu() {
+		menuBackground->Render();
+		menuPlay->Render();
+		menuLeaderboard->Render();
+		menuExit->Render();
+	}
+
+	void InitMainMenu(){
+		menuPlay = new Text("Zacni igro", 355, 240, gameRenderer, robotRegularPath, true, textColor);
+		menuLeaderboard = new Text("Lestvica", 362, 300, gameRenderer, robotRegularPath, true, textColor);
+		menuExit = new Text("Izhod", 375, 360, gameRenderer, robotRegularPath, true, textColor);
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -389,8 +351,8 @@ public:
 
 		scoreCounter = new ScoreCounter();
 
-		levels[0] = { 1, 1, 15, 10, 5, 1, 1 };
-		levels[1] = { 2, 0.5, 10, 10, 5, 1, 2 };
+		levels[0] = { 1, 1, 15, TIME_PER_LEVEL, 5, 1, 1 };
+		levels[1] = { 2, 0.5, 10, TIME_PER_LEVEL, 5, 1, 2 };
 
 		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
@@ -412,6 +374,11 @@ public:
 		spawner = new Spawner(levels[0].timeToSpawnDestruction, levels[0].timeToSpawnEnemy, forest, enemies);
 		replayManager = new ReplayManager();
 		replayManager->ClearFile();
+
+		menuBackground = new GameObject(forestGreen.red, forestGreen.green, forestGreen.blue, gameRenderer, 1, 600, 0, 800, 800, true);
+		menuBackground->Update();
+
+		InitMainMenu();
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -476,7 +443,6 @@ public:
 		if (!isPaused && !replayManager->GetIsReplaying()) replayManager->SavePosition({ player->GetX(), player->GetY() });
 
 		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
-		cout << replayManager->GetIsReplaying() << endl;
 	};
 
 	void Render() {
@@ -495,8 +461,11 @@ public:
 		
 		timeText->Render();
 		scoreText->Render();
+
 		if(isPaused) pauseText->Render();
 		if (replayManager->GetIsReplaying()) replayText->Render();
+
+		RenderMainMenu();
 
 		SDL_RenderCopy(gameRenderer, Message, NULL, &Message_rect);
 		SDL_RenderPresent(gameRenderer);
