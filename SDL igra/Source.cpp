@@ -30,6 +30,7 @@
 using namespace std;
 
 int PADDING_TOP = 10;
+int MARGIN_RIGHT = 350;
 int TIME_PER_LEVEL = 60;
 
 Color forestGreen{ 55, 178, 77 };
@@ -66,7 +67,7 @@ vector<Enemy*> enemies(3);
 Clock* gameClock;
 ScoreCounter* scoreCounter;
 
-Text* timeText, *scoreText, *pauseText, *replayText;
+Text* timeText, *scoreText, *pauseText, *backToMenuText, *replayText;
 
 Text* menuPlay, *menuLeaderboard, *menuExit;
 
@@ -101,7 +102,7 @@ class Game
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
-	int locationNumber = 3;
+	int locationNumber = 2;
 	// 0 - main menu
 	// 1 - input
 	// 2 - game
@@ -308,6 +309,10 @@ class Game
 		}
 	}
 
+	void HandlePauseButton(int x, int y) {
+		if (backToMenuText->IsColliding(x, y)) locationNumber = 0;
+	}
+
 	void HandleReplay() {
 
 		const Uint8* keys = SDL_GetKeyboardState(NULL);
@@ -371,7 +376,10 @@ class Game
 		timeText->Render();
 		scoreText->Render();
 
-		if(isPaused) pauseText->Render();
+		if (isPaused) { 
+			pauseText->Render();
+			backToMenuText->Render();
+		}
 		if (replayManager->GetIsReplaying()) replayText->Render();
 	}
 
@@ -388,9 +396,9 @@ class Game
 	}
 
 	void HandleMainMenu(int x, int y) {
-		if (menuPlay->IsColliding(x, y)) cout << "Zacni igro" << endl;
-		else if(menuLeaderboard->IsColliding(x, y)) cout << "Lestvica" << endl;
-		else if(menuExit->IsColliding(x, y)) cout << "Izhod" << endl;
+		if (menuPlay->IsColliding(x, y)) locationNumber = 2;
+		else if(menuLeaderboard->IsColliding(x, y)) locationNumber = 3;
+		else if(menuExit->IsColliding(x, y)) isRunning = false;
 	}
 
 	void InitLeaderboard() {
@@ -399,7 +407,7 @@ class Game
 		ifstream original("Assets/Score/scores.bin", ios::binary);
 
 		if (!original.is_open()) {
-			leaderboardTexts[0] = new Text("Ni rezultatov", 370, 180, gameRenderer, robotRegularPath, true, textColor);
+			leaderboardTexts[0] = new Text("Ni rezultatov", 350, 180, gameRenderer, robotRegularPath, true, textColor);
 
 			for (int i = 1; i < leaderboardTexts.size(); i++) {
 				leaderboardTexts[i] = nullptr;
@@ -414,7 +422,7 @@ class Game
 		{
 			const char* scoreString = Util::IntToCharPointer(curr.score);
 
-			leaderboardTexts[i] = new Text(strcat(strcat(curr.name, " - "), scoreString), 360, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
+			leaderboardTexts[i] = new Text(strcat(strcat(curr.name, " - "), scoreString), 350, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
 			i++;
 		}
 
@@ -433,7 +441,7 @@ class Game
 	}
 	
 	void HandleLeaderBoard(int x, int y) {
-		if (leaderboardBackText->IsColliding(x, y)) cout << "Nazaj" << endl;
+		if (leaderboardBackText->IsColliding(x, y)) locationNumber = 0;
 	}
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
@@ -462,8 +470,11 @@ public:
 
 		timeText = new Text("60", 400, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 		scoreText = new Text("000", 10, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
-		pauseText = new Text("PAUSE", width / 2 - 40, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
-		replayText = new Text("REPLAYING", width / 2 - 60, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
+
+		pauseText = new Text("PREMOR", width / 2 - 40, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
+		backToMenuText = new Text("Meni", width / 2 - 20, height / 2 + 10, gameRenderer, robotRegularPath, true, textColor);
+
+		replayText = new Text("PONAVLJANJE", width / 2 - 60, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
@@ -515,6 +526,7 @@ public:
 					if(locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
 					else if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
 					else if (locationNumber == 3) HandleLeaderBoard(event.button.x, event.button.y);
+					else if (locationNumber == 2 && isPaused) HandlePauseButton(event.button.x, event.button.y);
 				}
 			}
 		}
