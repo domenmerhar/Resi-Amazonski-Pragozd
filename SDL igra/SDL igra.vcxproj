@@ -147,6 +147,7 @@
     <ClCompile Include="FrameManager.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Player.cpp" />
+    <ClCompile Include="ReplayManager.cpp" />
     <ClCompile Include="ScoreCounter.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="Spawner.cpp" />
@@ -163,6 +164,7 @@
     <ClInclude Include="FrameManager.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Position.h" />
+    <ClInclude Include="ReplayManager.h" />
     <ClInclude Include="Score.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="Player.h" />
