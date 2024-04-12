@@ -30,7 +30,7 @@
 using namespace std;
 
 int PADDING_TOP = 10;
-int MARGIN_RIGHT = 350;
+int MARGIN_LEFT = 350;
 int TIME_PER_LEVEL = 60;
 
 Color forestGreen{ 55, 178, 77 };
@@ -69,7 +69,7 @@ ScoreCounter* scoreCounter;
 
 Text* timeText, *scoreText, *pauseText, *backToMenuText, *replayText;
 
-Text* menuPlay, *menuLeaderboard, *menuExit;
+Text* menuPlay, *menuLeaderboard, *menuExit, *menuTitleText;
 
 Text *leaderboardBackText;
 vector<Text*> leaderboardTexts(5);
@@ -102,7 +102,7 @@ class Game
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
-	int locationNumber = 2;
+	int locationNumber = 0;
 	// 0 - main menu
 	// 1 - input
 	// 2 - game
@@ -310,7 +310,10 @@ class Game
 	}
 
 	void HandlePauseButton(int x, int y) {
-		if (backToMenuText->IsColliding(x, y)) locationNumber = 0;
+		if (backToMenuText->IsColliding(x, y)) { 
+			menuPlay->ChangeText("Nadaljuj igro");
+			locationNumber = 0;
+		}
 	}
 
 	void HandleReplay() {
@@ -384,15 +387,17 @@ class Game
 	}
 
 	void RenderMainMenu() {
+		menuTitleText->Render();	
 		menuPlay->Render();
 		menuLeaderboard->Render();
 		menuExit->Render();
 	}
 
 	void InitMainMenu(){
-		menuPlay = new Text("Zacni igro", 355, 240, gameRenderer, robotRegularPath, true, textColor);
-		menuLeaderboard = new Text("Lestvica", 362, 300, gameRenderer, robotRegularPath, true, textColor);
-		menuExit = new Text("Izhod", 375, 360, gameRenderer, robotRegularPath, true, textColor);
+		menuTitleText = new Text("RESI AMAZONSKI PRAGOZD", 265, 100, gameRenderer, robotRegularPath, true, textColor);
+		menuPlay = new Text("Zacni igro", MARGIN_LEFT, 240, gameRenderer, robotRegularPath, true, textColor);
+		menuLeaderboard = new Text("Lestvica", MARGIN_LEFT, 300, gameRenderer, robotRegularPath, true, textColor);
+		menuExit = new Text("Izhod", MARGIN_LEFT, 360, gameRenderer, robotRegularPath, true, textColor);
 	}
 
 	void HandleMainMenu(int x, int y) {
@@ -407,7 +412,7 @@ class Game
 		ifstream original("Assets/Score/scores.bin", ios::binary);
 
 		if (!original.is_open()) {
-			leaderboardTexts[0] = new Text("Ni rezultatov", 350, 180, gameRenderer, robotRegularPath, true, textColor);
+			leaderboardTexts[0] = new Text("Ni rezultatov", MARGIN_LEFT, 180, gameRenderer, robotRegularPath, true, textColor);
 
 			for (int i = 1; i < leaderboardTexts.size(); i++) {
 				leaderboardTexts[i] = nullptr;
@@ -422,7 +427,7 @@ class Game
 		{
 			const char* scoreString = Util::IntToCharPointer(curr.score);
 
-			leaderboardTexts[i] = new Text(strcat(strcat(curr.name, " - "), scoreString), 350, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
+			leaderboardTexts[i] = new Text(strcat(strcat(curr.name, " - "), scoreString), MARGIN_LEFT, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
 			i++;
 		}
 
@@ -471,10 +476,10 @@ public:
 		timeText = new Text("60", 400, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 		scoreText = new Text("000", 10, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
 
-		pauseText = new Text("PREMOR", width / 2 - 40, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
-		backToMenuText = new Text("Meni", width / 2 - 20, height / 2 + 10, gameRenderer, robotRegularPath, true, textColor);
+		pauseText = new Text("PREMOR", MARGIN_LEFT, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
+		backToMenuText = new Text("Meni", MARGIN_LEFT, height / 2 + 10, gameRenderer, robotRegularPath, true, textColor);
 
-		replayText = new Text("PONAVLJANJE", width / 2 - 60, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
+		replayText = new Text("PONAVLJANJE", MARGIN_LEFT, height / 2 - 40, gameRenderer, robotRegularPath, true, textColor);
 
 		scoreCounter = new ScoreCounter();
 
