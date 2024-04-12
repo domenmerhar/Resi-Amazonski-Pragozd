@@ -518,6 +518,8 @@ public:
 	}
 
 	void HandleEvents() {
+		if(locationNumber == 2 && isPlaying && !isPaused) player->HandleInput();
+
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
@@ -605,8 +607,6 @@ int main(int argc, char* argv[]) {
 
 	while (game->IsRunning()) {
 		frameManager.StartFrame();
-
-		player->HandleInput();
 
 		game->HandleEvents();
 		game->Update();
