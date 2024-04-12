@@ -6,6 +6,7 @@
 #include <ctime>
 #include <cmath>
 #include <string>
+#include <cstring>
 #include <fstream>
 
 #include "Color.h"
@@ -411,12 +412,9 @@ class Game
 
 		while (original.read((char*)& curr, sizeof(curr)))
 		{
-			//TODO
-			//ADD TEXT TO LEADERBOARD
-
 			const char* scoreString = Util::IntToCharPointer(curr.score);
 
-			leaderboardTexts[i] = new Text(curr.name, 370, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
+			leaderboardTexts[i] = new Text(strcat(strcat(curr.name, " - "), scoreString), 360, 180 + i * 50, gameRenderer, robotRegularPath, true, textColor);
 			i++;
 		}
 
