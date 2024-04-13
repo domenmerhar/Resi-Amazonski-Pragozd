@@ -222,13 +222,13 @@ class Game
 	}
 
 	void HandleLevels() {
-		if (!player->GetIsVisible() && gameClock->GetIsCounting()) {
+		if (!player->GetIsVisible() && gameClock->GetIsCounting() || forest->GetDestroyedTreesPercentage() >= 70) {
 			ResetGame(levels[0]);
 			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			scoreCounter->ResetScore();
-		}
-
-		if (gameClock->GetTimeRemaining() <= 0) {
+			gameClock->StopCounting();
+		} 
+		else if (gameClock->GetTimeRemaining() <= 0) {
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
 				gameClock->StopCounting();
 				Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
@@ -280,7 +280,7 @@ class Game
 
 	void UpdateCurrentTime() {
 		const char* currentTime =
-			Util::IntToCharPointer(gameClock->GetTimeRemaining());
+		Util::IntToCharPointer(gameClock->GetTimeRemaining());
 		timeText->ChangeText(currentTime);
 		delete currentTime;
 	}
@@ -363,8 +363,6 @@ class Game
 		spawner->Update();
 		gameClock->Update();
 		if (!isPaused && !replayManager->GetIsReplaying()) replayManager->SavePosition({ player->GetX(), player->GetY() });
-		if (forest->GetDestroyedTreesPercentage() >= 70) ResetGame(levels[0]);
-
 	}
 
 	void RenderGameplay() {

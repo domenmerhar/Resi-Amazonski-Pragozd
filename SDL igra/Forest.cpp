@@ -69,7 +69,6 @@ void Forest::UpdateTreesInDestruction() {
 
 void Forest::CalculateDestroyedTreesPercentage() {
     destroyedTreesPercentage = (float)destroyedTrees / totalTrees * 100;
-    if (destroyedTreesPercentage >= 70) std::cout << "Game over!" << std::endl;
 }
 
 void Forest::Render() {
@@ -141,6 +140,11 @@ void Forest::Reset(float timeToBurn) {
             trees[row][column]->Reset(timeToBurn, treeColor.red, treeColor.green, treeColor.blue);
         }
     }
+
+    treesInDestruction.clear();
+
+    destroyedTreesPercentage = 0.0;
+    destroyedTrees = 0;
 }
 
 float Forest::GetDestroyedTreesPercentage() {
