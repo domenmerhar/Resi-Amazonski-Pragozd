@@ -476,7 +476,16 @@ class Game
 	void HandleInputSceenName(SDL_Event e) {
 
 		if (e.type == SDL_KEYDOWN) {
-			char toAppend;
+			char toAppend = NULL;
+
+			if(inputName.size() >= 20) return;
+
+			if (e.key.keysym.sym == SDLK_BACKSPACE && inputName.size() > 0) {
+				inputName.pop_back();
+				inputNameChar = inputName.c_str();
+				inputText->ChangeText(inputNameChar);
+				return; 
+			}
 
 			switch (e.key.keysym.sym) {
 			case SDLK_a:
@@ -558,8 +567,12 @@ class Game
 				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'Z' : 'z';
 				break;
 			}
+			
+			if (toAppend == NULL) return;
 
-			inputName.push_back(toAppend);
+			if (inputName == " ") inputName = toAppend;
+			else inputName.push_back(toAppend);
+
 			inputNameChar = inputName.c_str();
 
 			inputText->ChangeText(inputNameChar);
@@ -650,6 +663,7 @@ public:
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
 					if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
+					else if (locationNumber == 1) HandleInputConfirm(event.button.x, event.button.y);
 					else if (locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
 					else if (locationNumber == 2 && isPaused) HandlePauseButton(event.button.x, event.button.y);
 					else if (locationNumber == 3 || locationNumber == 1) HandleLeaderboardBack(event.button.x, event.button.y);
@@ -661,8 +675,6 @@ public:
 	};
 
 	void Update() {
-		cout << inputName << endl;
-		cout << inputNameChar << endl;
 		switch (locationNumber) {
 			// 0 - main menu
 			// 1 - input
