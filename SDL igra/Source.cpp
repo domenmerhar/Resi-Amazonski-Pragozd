@@ -40,7 +40,8 @@ Color orange{ 251, 139, 35};
 Color red{ 201, 42, 42 };
 Color pink{ 166, 30, 77 };
 
-SDL_Color textColor{ 255, 255, 255, 0 };
+SDL_Color textColor{ 255, 255, 255, 0};
+SDL_Color greyTextColor{ 134, 142, 150, 0 };
 
 TTF_Font* font;
 
@@ -74,9 +75,7 @@ Text* menuPlay, *menuLeaderboard, *menuExit, *menuTitleText;
 Text *leaderboardBackText;
 vector<Text*> leaderboardTexts(5);
 
-Text* inputLabel, *inputText;
-
-char testName[21] = "Jožica";
+Text* inputLabel, *inputText, *inputConfirm;
 
 ReplayManager *replayManager;
 
@@ -102,11 +101,14 @@ class Game
 	int escapeDelayCounter = 0;
 	bool canEscape = true;
 
-	int locationNumber = 0;
+	short int locationNumber = 0;
 	// 0 - main menu
 	// 1 - input
 	// 2 - game
 	// 3 - leaderboard
+
+	string inputName = " ";
+	const char* inputNameChar = inputName.c_str();
 
 	void HideSpawnSquares() {
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
@@ -193,7 +195,7 @@ class Game
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
-				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter, testName);
+				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter, inputNameChar);
 				enemies[i]->Move();
 			}
 		}
@@ -222,14 +224,14 @@ class Game
 	void HandleLevels() {
 		if (!player->GetIsVisible() && gameClock->GetIsCounting()) {
 			ResetGame(levels[0]);
-			Util::SaveScore(scoreCounter->GetScore(), testName);
+			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			scoreCounter->ResetScore();
 		}
 
 		if (gameClock->GetTimeRemaining() <= 0) {
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
 				gameClock->StopCounting();
-				Util::SaveScore(scoreCounter->GetScore(), testName);
+				Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 				scoreCounter->ResetScore();
 				ResetGame(levels[0]);
 			}
@@ -310,7 +312,7 @@ class Game
 	}
 
 	void HandlePauseButton(int x, int y) {
-		if (backToMenuText->IsColliding(x, y)) { 
+		if (backToMenuText->IsColliding(x, y)) {
 			menuPlay->ChangeText("Nadaljuj igro");
 			locationNumber = 0;
 		}
@@ -344,7 +346,7 @@ class Game
 		HandlePause();
 		if (!isPlaying) return;
 
-		if(player->GetIsVisible()) scoreCounter->AddScore(1);
+		if (player->GetIsVisible()) scoreCounter->AddScore(1);
 
 		UpdateCurrentScore();
 
@@ -354,7 +356,7 @@ class Game
 		player->HandleTreeCollision(forest->GetBurningTrees());
 
 		forest->Update();
-		
+
 		HandleAllies(forest->GetBurningTrees());
 		HandleEnemies();
 
@@ -375,11 +377,11 @@ class Game
 		for (int i = 0; i < playerSpawnSquares.size(); i++) {
 			playerSpawnSquares[i]->Render();
 		}
-		
+
 		timeText->Render();
 		scoreText->Render();
 
-		if (isPaused) { 
+		if (isPaused) {
 			pauseText->Render();
 			backToMenuText->Render();
 		}
@@ -387,13 +389,13 @@ class Game
 	}
 
 	void RenderMainMenu() {
-		menuTitleText->Render();	
+		menuTitleText->Render();
 		menuPlay->Render();
 		menuLeaderboard->Render();
 		menuExit->Render();
 	}
 
-	void InitMainMenu(){
+	void InitMainMenu() {
 		menuTitleText = new Text("RESI AMAZONSKI PRAGOZD", 265, 100, gameRenderer, robotRegularPath, true, textColor);
 		menuPlay = new Text("Zacni igro", MARGIN_LEFT, 240, gameRenderer, robotRegularPath, true, textColor);
 		menuLeaderboard = new Text("Lestvica", MARGIN_LEFT, 300, gameRenderer, robotRegularPath, true, textColor);
@@ -401,9 +403,12 @@ class Game
 	}
 
 	void HandleMainMenu(int x, int y) {
-		if (menuPlay->IsColliding(x, y)) locationNumber = 2;
-		else if(menuLeaderboard->IsColliding(x, y)) locationNumber = 3;
-		else if(menuExit->IsColliding(x, y)) isRunning = false;
+		if (menuPlay->IsColliding(x, y)) locationNumber = isPlaying && isPaused ? 2 : 1;
+		else if (menuLeaderboard->IsColliding(x, y)) locationNumber = 3;
+		else if (menuExit->IsColliding(x, y)) {
+			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
+			isRunning = false;
+		}
 	}
 
 	void InitLeaderboard() {
@@ -419,11 +424,11 @@ class Game
 			}
 			return;
 		}
-			
+
 		int i = 0;
 		struct Score curr;
 
-		while (original.read((char*)& curr, sizeof(curr)))
+		while (original.read((char*)&curr, sizeof(curr)))
 		{
 			const char* scoreString = Util::IntToCharPointer(curr.score);
 
@@ -438,16 +443,129 @@ class Game
 		original.close();
 	}
 
-	void RenderLeaderBoard(){
+	void RenderLeaderBoard() {
 		leaderboardBackText->Render();
 		for (int i = 0; i < leaderboardTexts.size(); i++) {
-			if(leaderboardTexts[i] != nullptr) leaderboardTexts[i]->Render();
+			if (leaderboardTexts[i] != nullptr) leaderboardTexts[i]->Render();
 		}
 	}
-	
-	void HandleLeaderBoard(int x, int y) {
+
+	void HandleLeaderboardBack(int x, int y) {
 		if (leaderboardBackText->IsColliding(x, y)) locationNumber = 0;
 	}
+
+	void InitInputSceen() {
+		inputLabel = new Text("Vnesi ime", MARGIN_LEFT, 180, gameRenderer, robotRegularPath, true, textColor);
+		inputText = new Text(inputName.c_str(), MARGIN_LEFT, 240, gameRenderer, robotRegularPath, true, textColor);
+		inputConfirm = new Text("Potrdi", MARGIN_LEFT, 300, gameRenderer, robotRegularPath, true, textColor);
+	}
+
+	void RenderInputScreen() {
+		leaderboardBackText->Render();
+		inputLabel->Render();
+		inputText->Render();
+		inputConfirm->Render();
+	}
+
+	void HandleInputConfirm(int x, int y) {
+		if (inputConfirm->IsColliding(x, y)) {
+			locationNumber = 2;
+		}
+	}
+
+	void HandleInputSceenName(SDL_Event e) {
+
+		if (e.type == SDL_KEYDOWN) {
+			char toAppend;
+
+			switch (e.key.keysym.sym) {
+			case SDLK_a:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'A' : 'a';
+				break;
+			case SDLK_b:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'B' : 'b';
+				break;
+			case SDLK_c:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'C' : 'c';
+				break;
+			case SDLK_d:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'D' : 'd';
+				break;
+			case SDLK_e:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'E' : 'e';
+				break;
+			case SDLK_f:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'F' : 'f';
+				break;
+			case SDLK_g:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'G' : 'g';
+				break;
+			case SDLK_h:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'H' : 'h';
+				break;
+			case SDLK_i:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'I' : 'i';
+				break;
+			case SDLK_j:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'J' : 'j';
+				break;
+			case SDLK_k:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'K' : 'k';
+				break;
+			case SDLK_l:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'L' : 'l';
+				break;
+			case SDLK_m:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'M' : 'm';
+				break;
+			case SDLK_n:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'N' : 'n';
+				break;
+			case SDLK_o:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'O' : 'o';
+				break;
+			case SDLK_p:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'P' : 'p';
+				break;
+			case SDLK_q:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'Q' : 'q';
+				break;
+			case SDLK_r:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'R' : 'r';
+				break;
+			case SDLK_s:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'S' : 's';
+				break;
+			case SDLK_t:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'T' : 't';
+				break;
+			case SDLK_u:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'U' : 'u';
+				break;
+			case SDLK_v:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'V' : 'v';
+				break;
+			case SDLK_w:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'W' : 'w';
+				break;
+			case SDLK_x:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'X' : 'x';
+				break;
+			case SDLK_y:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'Y' : 'y';
+				break;
+			case SDLK_z:
+				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'Z' : 'z';
+				break;
+			}
+
+			inputName.push_back(toAppend);
+			inputNameChar = inputName.c_str();
+
+			inputText->ChangeText(inputNameChar);
+		}
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
 		int flags = 0;
@@ -509,6 +627,7 @@ public:
 
 		InitMainMenu();
 		InitLeaderboard();
+		InitInputSceen();   
 
 		for (int i = 0; i < allies.size(); i++) {
 			allies[i]->Show();
@@ -526,20 +645,24 @@ public:
 			if (event.type == SDL_QUIT && isRunning) {
 				isRunning = false;
 
-				if(scoreCounter->GetScore() > 0) Util::SaveScore(scoreCounter->GetScore(), testName);
+				if(scoreCounter->GetScore() > 0) Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
-					if(locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
-					else if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
-					else if (locationNumber == 3) HandleLeaderBoard(event.button.x, event.button.y);
+					if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
+					else if (locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
 					else if (locationNumber == 2 && isPaused) HandlePauseButton(event.button.x, event.button.y);
+					else if (locationNumber == 3 || locationNumber == 1) HandleLeaderboardBack(event.button.x, event.button.y);
 				}
 			}
+			else if (locationNumber == 1) HandleInputSceenName(event);
+
 		}
 	};
 
 	void Update() {
+		cout << inputName << endl;
+		cout << inputNameChar << endl;
 		switch (locationNumber) {
 			// 0 - main menu
 			// 1 - input
@@ -569,6 +692,7 @@ public:
 				RenderMainMenu();
 				break;
 			case 1:
+				RenderInputScreen();
 				break;
 			case 2:
 				RenderGameplay();

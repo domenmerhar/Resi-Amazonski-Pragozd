@@ -52,7 +52,7 @@ const char* Util::IntToCharPointer(int number) {
     return charPointer;
 }
 
-void Util::SaveScore(int score, char name[]) {
+void Util::SaveScore(int score, const  char name[]) {
 	ifstream original("Assets/Score/scores.bin", ios::binary);
 
 	if (!original.is_open()) {

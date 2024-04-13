@@ -38,5 +38,5 @@ public:
 
     bool GetIsBig();
 
-    void HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter, char name[]);
+    void HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter, const char name[]);
 };

@@ -107,7 +107,7 @@ bool Enemy::GetIsBig() {
     return isBig;
 }
 
-void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter, char name[]) {
+void Enemy::HandleCollision(std::vector<Ally*> allies, std::vector<Enemy*> enemies, Player* player, ScoreCounter* scoreCounter, const char name[]) {
     if (!visible) return;
 
     boundingBox = GetBoundingBox();
