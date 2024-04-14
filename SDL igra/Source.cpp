@@ -429,7 +429,8 @@ class Game
 	}
 
 	void HandleMainMenu(int x, int y) {
-		if (menuPlay->IsColliding(x, y)) locationNumber = isPlaying && isPaused ? 2 : 1;
+		cout << isPlaying << endl;
+		if (menuPlay->IsColliding(x, y)) locationNumber = isPaused ? 2 : 1;
 		else if (menuLeaderboard->IsColliding(x, y)) { 
 			locationNumber = 3;
 			ReinistateLeaderboard();
@@ -657,8 +658,8 @@ public:
 
 		scoreCounter = new ScoreCounter();
 
-		levels[0] = { 1, 1, 15, 5, 5, 1, 1 };
-		levels[1] = { 2, 0.5, 10, 5, 5, 1, 2 };
+		levels[0] = { 1, 1, 15, TIME_PER_LEVEL, 5, 1, 1 };
+		levels[1] = { 2, 0.5, 10, TIME_PER_LEVEL, 5, 1, 2 };
 
 		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
@@ -698,9 +699,11 @@ public:
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
+			//cout << scoreCounter->GetScore() << endl;
+			//cout << inputNameChar << endl;
 			if (event.type == SDL_QUIT && isRunning) {
 				isRunning = false;
-
+				
 				if(scoreCounter->GetScore() > 0) Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			}
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
