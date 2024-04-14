@@ -54,17 +54,21 @@ const char* Util::IntToCharPointer(int number) {
 
 void Util::SaveScore(int score, const  char name[]) {
 	ifstream original("Assets/Score/scores.bin", ios::binary);
-
-	if (!original.is_open()) {
-		cout << "ScoreSaver: File not found!" << endl;
-		return;
-	}
-
+	ofstream copy("Assets/Score/tmp.bin", ios::binary);
+	
 	struct Score scoreToSave;
 	scoreToSave.score = score;
 	strcpy(scoreToSave.name, name);
 
-	ofstream copy("Assets/Score/tmp.bin", ios::binary);
+
+	if (!original.is_open()) {
+		copy.write((char*)&scoreToSave, sizeof(scoreToSave));
+		copy.close();
+
+		rename("Assets/Score/tmp.bin", "Assets/Score/scores.bin");
+		return;
+	}
+
 	struct Score curr;
 	bool isSaved = false;
 
