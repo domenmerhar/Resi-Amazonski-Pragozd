@@ -429,7 +429,6 @@ class Game
 	}
 
 	void HandleMainMenu(int x, int y) {
-		cout << isPlaying << endl;
 		if (menuPlay->IsColliding(x, y)) locationNumber = isPaused ? 2 : 1;
 		else if (menuLeaderboard->IsColliding(x, y)) { 
 			locationNumber = 3;
@@ -699,8 +698,6 @@ public:
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
-			//cout << scoreCounter->GetScore() << endl;
-			//cout << inputNameChar << endl;
 			if (event.type == SDL_QUIT && isRunning) {
 				isRunning = false;
 				
@@ -709,7 +706,10 @@ public:
 			else if (event.type == SDL_MOUSEBUTTONDOWN) {
 				if (event.button.button == SDL_BUTTON_LEFT) {
 					if (locationNumber == 0) HandleMainMenu(event.button.x, event.button.y);
-					else if (locationNumber == 1) HandleInputConfirm(event.button.x, event.button.y);
+					else if (locationNumber == 1) {
+						HandleInputConfirm(event.button.x, event.button.y);
+						HandleLeaderboardBack(event.button.x, event.button.y);
+					}
 					else if (locationNumber == 2 && playerSpawnSquares[0]->GetIsVisible()) HandleEventsSpawnSquares(event.button.x, event.button.y);
 					else if (locationNumber == 2 && isPaused) HandlePauseButton(event.button.x, event.button.y);
 					else if (locationNumber == 3 || locationNumber == 1) HandleLeaderboardBack(event.button.x, event.button.y);
