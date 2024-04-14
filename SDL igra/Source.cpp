@@ -102,6 +102,7 @@ class Game
 	bool canEscape = true;
 
 	short int locationNumber = 0;
+	short int currentLevel = 0;
 	// 0 - main menu
 	// 1 - input
 	// 2 - game
@@ -237,6 +238,8 @@ class Game
 			scoreCounter->ResetScore();
 			gameClock->StopCounting();
 
+			currentLevel = 1;
+
 			ResetText();
 		} 
 		else if (gameClock->GetTimeRemaining() <= 0) {
@@ -246,10 +249,22 @@ class Game
 				scoreCounter->ResetScore();
 				ResetGame(levels[0]);
 
+				currentLevel = 0;
+
 				ResetText();
 			}
-			else {
+			else if(currentLevel == 0) {
 				ResetGame(levels[1]);
+				currentLevel = 1;
+			}
+			else if (currentLevel == 1) {
+				Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
+				scoreCounter->ResetScore();
+				ResetGame(levels[0]);
+				currentLevel = 0;
+				ResetText();
+
+				locationNumber = 0;
 			}
 		}
 	}
@@ -415,16 +430,17 @@ class Game
 
 	void HandleMainMenu(int x, int y) {
 		if (menuPlay->IsColliding(x, y)) locationNumber = isPlaying && isPaused ? 2 : 1;
-		else if (menuLeaderboard->IsColliding(x, y)) locationNumber = 3;
+		else if (menuLeaderboard->IsColliding(x, y)) { 
+			locationNumber = 3;
+			ReinistateLeaderboard();
+		}
 		else if (menuExit->IsColliding(x, y)) {
 			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			isRunning = false;
 		}
 	}
 
-	void InitLeaderboard() {
-		leaderboardBackText = new Text("Nazaj", PADDING_TOP, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
-
+	void ReinistateLeaderboard() {
 		ifstream original("Assets/Score/scores.bin", ios::binary);
 
 		if (!original.is_open()) {
@@ -452,6 +468,13 @@ class Game
 		}
 
 		original.close();
+
+	}
+
+	void InitLeaderboard() {
+		leaderboardBackText = new Text("Nazaj", PADDING_TOP, PADDING_TOP, gameRenderer, robotRegularPath, true, textColor);
+
+		ReinistateLeaderboard();
 	}
 
 	void RenderLeaderBoard() {
@@ -634,8 +657,8 @@ public:
 
 		scoreCounter = new ScoreCounter();
 
-		levels[0] = { .1, .1, 15, TIME_PER_LEVEL, 5, 1, 1 };
-		levels[1] = { 2, 0.5, 10, TIME_PER_LEVEL, 5, 1, 2 };
+		levels[0] = { 1, 1, 15, 5, 5, 1, 1 };
+		levels[1] = { 2, 0.5, 10, 5, 5, 1, 2 };
 
 		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
 		playerSpawnSquares[0] = new GameObject(200, 200, 200, gameRenderer, 0, 0, 0, 64, 64, true);
@@ -707,10 +730,8 @@ public:
 			case 2:
 				UpdateGameplay();
 				break;
-			case 3:
-				break;
 		}
-		};
+	};
 
 	void Render() {
 		SDL_RenderClear(gameRenderer);
