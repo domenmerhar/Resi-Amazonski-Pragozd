@@ -11,10 +11,6 @@ void ScoreCounter::AddScore(int scoreToAdd) {
 	score += scoreToAdd;
 }
 
-void ScoreCounter::SaveScore() {
-	// Save score to file
-}
-
 void ScoreCounter::ResetScore() {
 	score = 0;
 }
