@@ -221,12 +221,23 @@ class Game
 		ShowSpawnSquares();
 	}
 
+	void ResetText(){
+		inputName = "";
+		inputNameChar = " ";
+		locationNumber = 0;
+			
+		inputText->ChangeText(inputNameChar);
+		timeText->ChangeText("60");
+	}
+
 	void HandleLevels() {
 		if (!player->GetIsVisible() && gameClock->GetIsCounting() || forest->GetDestroyedTreesPercentage() >= 70) {
 			ResetGame(levels[0]);
 			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			scoreCounter->ResetScore();
 			gameClock->StopCounting();
+
+			ResetText();
 		} 
 		else if (gameClock->GetTimeRemaining() <= 0) {
 			if (forest->GetDestroyedTreesPercentage() >= 70) {
@@ -234,6 +245,8 @@ class Game
 				Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 				scoreCounter->ResetScore();
 				ResetGame(levels[0]);
+
+				ResetText();
 			}
 			else {
 				ResetGame(levels[1]);
@@ -478,6 +491,13 @@ class Game
 
 			if(inputName.size() >= 20) return;
 
+			if (e.key.keysym.sym == SDLK_BACKSPACE && inputName.size() == 1) {
+				inputName = " ";
+				inputNameChar = inputName.c_str();
+				inputText->ChangeText(inputNameChar);
+				return;
+			}
+
 			if (e.key.keysym.sym == SDLK_BACKSPACE && inputName.size() > 0) {
 				inputName.pop_back();
 				inputNameChar = inputName.c_str();
@@ -564,15 +584,17 @@ class Game
 			case SDLK_z:
 				toAppend = (SDL_GetModState() & KMOD_SHIFT) ? 'Z' : 'z';
 				break;
+			case SDLK_SPACE:
+				toAppend = ' ';
+				break;
 			}
 			
 			if (toAppend == NULL) return;
 
-			if (inputName == " ") inputName = toAppend;
+			if (inputName == " " || inputName == "") inputName = toAppend;
 			else inputName.push_back(toAppend);
 
 			inputNameChar = inputName.c_str();
-
 			inputText->ChangeText(inputNameChar);
 		}
 	}
@@ -612,7 +634,7 @@ public:
 
 		scoreCounter = new ScoreCounter();
 
-		levels[0] = { 1, 1, 15, TIME_PER_LEVEL, 5, 1, 1 };
+		levels[0] = { .1, .1, 15, TIME_PER_LEVEL, 5, 1, 1 };
 		levels[1] = { 2, 0.5, 10, TIME_PER_LEVEL, 5, 1, 2 };
 
 		player = new Player(firefigherPathRight, firefighterPathLeft, gameRenderer, 0, 0, levels[0].playerSpeed, 32, 32, false, scoreCounter);
