@@ -95,6 +95,11 @@ class Game
 
 	bool isPlaying = false;
 	bool isPaused = false;
+	bool isFullscreen;
+
+	const char* title; 
+	int x, y;
+	int width, height;
 
 	int escapeDelay = 20;
 
@@ -233,6 +238,8 @@ class Game
 
 	void HandleLevels() {
 		if (!player->GetIsVisible() && gameClock->GetIsCounting() || forest->GetDestroyedTreesPercentage() >= 70) {
+			cout << "Game over: destroyed trees percentage: " << forest->GetDestroyedTreesPercentage() << endl;
+
 			ResetGame(levels[0]);
 			Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 			scoreCounter->ResetScore();
@@ -247,6 +254,8 @@ class Game
 				gameClock->StopCounting();
 				Util::SaveScore(scoreCounter->GetScore(), inputNameChar);
 				scoreCounter->ResetScore();
+
+				cout << "Game over time run out: destroyed trees percentage: " << forest->GetDestroyedTreesPercentage() << endl;
 				ResetGame(levels[0]);
 
 				currentLevel = 0;
@@ -622,9 +631,21 @@ class Game
 		}
 	}
 
+	void HandleFullscreen() {
+		isFullscreen = !isFullscreen;
+		SDL_SetWindowFullscreen(window, isFullscreen);
+	}
+
 public:
 	void Init(const char* title, int x, int y, int width, int height, bool fullscreen) {
+		this->title = title;
+		this->x = x;
+		this->y = y;
+		this->width = width;
+		this->height = height;
+
 		int flags = 0;
+		isFullscreen = fullscreen;
 		
 		if (fullscreen) {
 			flags = SDL_WINDOW_FULLSCREEN;
@@ -634,14 +655,11 @@ public:
 
 			window = SDL_CreateWindow(title, x, y, width, height, fullscreen);
 
-			if (window) {
-			}
-
 			gameRenderer = SDL_CreateRenderer(window, -1, 0);
 
 			if(gameRenderer) {
 				SDL_SetRenderDrawColor(gameRenderer, 55, 178, 77, 255);
-				cout << "Renderer created!" << endl;
+				//cout << "Renderer created!" << endl;
 			}
 
 			isRunning = true;
@@ -698,6 +716,9 @@ public:
 		SDL_Event event;
 
 		while (SDL_PollEvent(&event)) {
+			if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_F11) {
+				HandleFullscreen();
+			}
 			if (event.type == SDL_QUIT && isRunning) {
 				isRunning = false;
 				
@@ -765,7 +786,7 @@ public:
 		SDL_DestroyWindow(window);
 		SDL_DestroyRenderer(gameRenderer);
 		SDL_Quit();
-		cout << "Game cleaned!" << endl;
+		//cout << "Game cleaned!" << endl;
 	};
 
 	bool IsRunning() { 
