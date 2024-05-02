@@ -198,10 +198,14 @@ class Game
 	}
 
 	void HandleEnemies() {
+		int randomNum = rand() % 100;
+		bool powerUpActive = randomNum < 20;
+		bool isCollided = false;
+
 		for (int i = 0; i < enemies.size(); i++) {
 			if (enemies[i]->GetIsVisible()) {
 				enemies[i]->Update();
-				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter, inputNameChar);
+				enemies[i]->HandleCollision(allies, enemies, player, scoreCounter, inputNameChar, powerUpActive, isCollided);
 				enemies[i]->Move();
 			}
 		}
@@ -658,7 +662,7 @@ public:
 			gameRenderer = SDL_CreateRenderer(window, -1, 0);
 
 			if(gameRenderer) {
-				SDL_SetRenderDrawColor(gameRenderer, 55, 178, 77, 255);
+				SDL_SetRenderDrawColor(gameRenderer, forestGreen.red, forestGreen.green, forestGreen.blue, 255);
 				//cout << "Renderer created!" << endl;
 			}
 
